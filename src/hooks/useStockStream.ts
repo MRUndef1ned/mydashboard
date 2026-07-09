@@ -8,6 +8,8 @@ interface StreamState {
   status: ConnectionStatus
   lastUpdated: number | null
   error: string | null
+  pollInterval: number
+  marketOpen: boolean
 }
 
 export function useStockStream(symbols: string[]) {
@@ -16,6 +18,8 @@ export function useStockStream(symbols: string[]) {
     status: 'idle',
     lastUpdated: null,
     error: null,
+    pollInterval: 30_000,
+    marketOpen: false,
   })
   const prevPrices = useRef<Record<string, number>>({})
   const [flash, setFlash] = useState<Record<string, 'up' | 'down' | null>>({})
@@ -45,7 +49,14 @@ export function useStockStream(symbols: string[]) {
 
   useEffect(() => {
     if (symbols.length === 0) {
-      setState({ quotes: {}, status: 'idle', lastUpdated: null, error: null })
+      setState({
+        quotes: {},
+        status: 'idle',
+        lastUpdated: null,
+        error: null,
+        pollInterval: 30_000,
+        marketOpen: false,
+      })
       return
     }
 
@@ -73,6 +84,8 @@ export function useStockStream(symbols: string[]) {
           status: 'live',
           lastUpdated: data.updatedAt,
           error: null,
+          pollInterval: data.pollInterval ?? 30_000,
+          marketOpen: data.marketOpen ?? false,
         })
       } catch {
         setState((s) => ({ ...s, status: 'error', error: 'Veri işlenemedi' }))

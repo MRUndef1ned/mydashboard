@@ -28,6 +28,13 @@ interface YahooMeta {
   regularMarketVolume?: number
 }
 
+interface SparkEntry {
+  symbol: string
+  previousClose?: number
+  chartPreviousClose?: number
+  close?: number[]
+}
+
 async function yahooFetch(url: string) {
   const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } })
   if (!res.ok) throw new Error(`Yahoo API error: ${res.status}`)
@@ -58,26 +65,73 @@ function parseQuote(meta: YahooMeta): StockQuote | null {
   }
 }
 
+function parseSparkQuote(entry: SparkEntry): StockQuote | null {
+  const closes = entry.close?.filter((c) => c != null) ?? []
+  const price = closes.length > 0 ? closes[closes.length - 1] : null
+  const previousClose = entry.previousClose ?? entry.chartPreviousClose
+  if (price == null || previousClose == null) return null
+
+  const change = price - previousClose
+  const changePercent = previousClose !== 0 ? (change / previousClose) * 100 : 0
+
+  return {
+    symbol: entry.symbol,
+    name: entry.symbol.replace('.IS', ''),
+    price,
+    previousClose,
+    change,
+    changePercent,
+    currency: detectMarket(entry.symbol) === 'BIST' ? 'TRY' : 'USD',
+    market: detectMarket(entry.symbol),
+    dayHigh: closes.length > 0 ? Math.max(...closes) : price,
+    dayLow: closes.length > 0 ? Math.min(...closes) : price,
+    volume: 0,
+    updatedAt: Date.now(),
+  }
+}
+
+/** Tek Yahoo isteğiyle tüm sembolleri çeker (spark batch API) */
+async function fetchQuotesBatch(symbols: string[]): Promise<StockQuote[]> {
+  const joined = symbols.join(',')
+  const data = await yahooFetch(
+    `https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(joined)}&range=1d&interval=5m`,
+  )
+
+  return Object.values(data as Record<string, SparkEntry>)
+    .map(parseSparkQuote)
+    .filter((q): q is StockQuote => q !== null)
+}
+
+/** Tek sembol için detaylı veri (fallback) */
+async function fetchSingleQuote(symbol: string): Promise<StockQuote | null> {
+  try {
+    const data = await yahooFetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1m&range=1d`,
+    )
+    const meta = data?.chart?.result?.[0]?.meta as YahooMeta | undefined
+    if (!meta) return null
+    return parseQuote(meta)
+  } catch {
+    return null
+  }
+}
+
 export async function fetchQuotes(symbols: string[]): Promise<StockQuote[]> {
   const unique = [...new Set(symbols.map((s) => normalizeSymbol(s)))]
   if (unique.length === 0) return []
 
-  const results = await Promise.all(
-    unique.map(async (symbol) => {
-      try {
-        const data = await yahooFetch(
-          `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1m&range=1d`,
-        )
-        const meta = data?.chart?.result?.[0]?.meta as YahooMeta | undefined
-        if (!meta) return null
-        return parseQuote(meta)
-      } catch {
-        return null
-      }
-    }),
-  )
+  try {
+    const batch = await fetchQuotesBatch(unique)
+    if (batch.length === unique.length) return batch
 
-  return results.filter((q): q is StockQuote => q !== null)
+    const found = new Set(batch.map((q) => q.symbol))
+    const missing = unique.filter((s) => !found.has(s))
+    const fallback = await Promise.all(missing.map(fetchSingleQuote))
+    return [...batch, ...fallback.filter((q): q is StockQuote => q !== null)]
+  } catch {
+    const results = await Promise.all(unique.map(fetchSingleQuote))
+    return results.filter((q): q is StockQuote => q !== null)
+  }
 }
 
 export async function searchStocks(query: string): Promise<SearchResult[]> {

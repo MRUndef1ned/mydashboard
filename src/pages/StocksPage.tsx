@@ -11,7 +11,7 @@ import { displaySymbol, formatPrice } from '../types/stocks'
 
 export function StocksPage() {
   const { items, symbols, removeStock } = useWatchlist()
-  const { quotes, status, lastUpdated, error, flash } = useStockStream(symbols)
+  const { quotes, status, lastUpdated, error, flash, marketOpen } = useStockStream(symbols)
   const { addToast } = useUI()
   const [modalOpen, setModalOpen] = useState(false)
   const [filter, setFilter] = useState<'all' | 'BIST' | 'US'>('all')
@@ -63,7 +63,7 @@ export function StocksPage() {
             {status === 'live' ? (
               <>
                 <Radio className="h-3 w-3 animate-pulse-soft" />
-                Canlı · 10sn güncelleme
+                {marketOpen ? 'Canlı · 30sn güncelleme' : 'Piyasa kapalı · 2dk güncelleme'}
               </>
             ) : status === 'connecting' ? (
               <>

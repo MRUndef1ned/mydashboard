@@ -1,3 +1,5 @@
+import { fetchQuotes } from './yahoo.js'
+
 export interface MarketTickerItem {
   id: string
   label: string
@@ -10,32 +12,12 @@ export interface MarketTickerItem {
   symbol?: string
 }
 
-const USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-
 const GRAMS_PER_TROY_OZ = 31.1034768
+
+const CORE_SYMBOLS = ['XU100.IS', 'USDTRY=X', 'EURTRY=X', 'GC=F'] as const
 
 let bannerCache: { data: MarketTickerItem[]; expiresAt: number } | null = null
 const BANNER_TTL = 45_000
-
-async function fetchSparkPrice(symbol: string): Promise<{ price: number; previousClose: number } | null> {
-  try {
-    const res = await fetch(
-      `https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(symbol)}&range=1d&interval=5m`,
-      { headers: { 'User-Agent': USER_AGENT } },
-    )
-    if (!res.ok) return null
-    const data = await res.json()
-    const entry = data[symbol]
-    if (!entry?.close?.length) return null
-    const price = entry.close[entry.close.length - 1]
-    const previousClose = entry.previousClose ?? entry.chartPreviousClose
-    if (price == null || previousClose == null) return null
-    return { price, previousClose }
-  } catch {
-    return null
-  }
-}
 
 function buildItem(
   id: string,
@@ -55,12 +37,13 @@ async function fetchCoreBanner(): Promise<MarketTickerItem[]> {
   const cached = bannerCache && Date.now() < bannerCache.expiresAt ? bannerCache.data : null
   if (cached) return cached
 
-  const [bist, usd, eur, goldOz] = await Promise.all([
-    fetchSparkPrice('XU100.IS'),
-    fetchSparkPrice('USDTRY=X'),
-    fetchSparkPrice('EURTRY=X'),
-    fetchSparkPrice('GC=F'),
-  ])
+  const quotes = await fetchQuotes([...CORE_SYMBOLS])
+  const bySymbol = Object.fromEntries(quotes.map((q) => [q.symbol, q]))
+
+  const bist = bySymbol['XU100.IS']
+  const usd = bySymbol['USDTRY=X']
+  const eur = bySymbol['EURTRY=X']
+  const goldOz = bySymbol['GC=F']
 
   const items: MarketTickerItem[] = []
 
@@ -79,7 +62,10 @@ async function fetchCoreBanner(): Promise<MarketTickerItem[]> {
     items.push(buildItem('gold', 'Altın (gr)', gramPrice, prevGram, 'TRY', 'commodity'))
   }
 
-  bannerCache = { data: items, expiresAt: Date.now() + BANNER_TTL }
+  if (items.length > 0) {
+    bannerCache = { data: items, expiresAt: Date.now() + BANNER_TTL }
+  }
+
   return items
 }
 
@@ -88,7 +74,6 @@ export async function fetchMarketBanner(highlightSymbol?: string): Promise<Marke
   const items = [...core]
 
   if (highlightSymbol) {
-    const { fetchQuotes } = await import('./yahoo.js')
     const quotes = await fetchQuotes([highlightSymbol])
     const q = quotes[0]
     if (q) {

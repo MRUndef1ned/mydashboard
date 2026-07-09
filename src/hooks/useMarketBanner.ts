@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useWatchlist } from '../context/WatchlistContext'
 
 export interface MarketTickerItem {
@@ -18,6 +18,7 @@ export function useMarketBanner() {
   const [items, setItems] = useState<MarketTickerItem[]>([])
   const [highlightIndex, setHighlightIndex] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const highlightSymbol = symbols.length > 0 ? symbols[highlightIndex % symbols.length] : undefined
 
@@ -29,33 +30,28 @@ export function useMarketBanner() {
     return () => clearInterval(timer)
   }, [symbols.length])
 
-  useEffect(() => {
-    let active = true
-
-    async function load() {
-      try {
-        const params = highlightSymbol
-          ? `?highlight=${encodeURIComponent(highlightSymbol)}`
-          : ''
-        const res = await fetch(`/api/market/banner${params}`)
-        if (!res.ok) throw new Error('fetch failed')
-        const data = await res.json()
-        if (active) {
-          setItems(data.items)
-          setLoading(false)
-        }
-      } catch {
-        if (active) setLoading(false)
-      }
-    }
-
-    load()
-    const timer = setInterval(load, 60_000)
-    return () => {
-      active = false
-      clearInterval(timer)
+  const load = useCallback(async () => {
+    try {
+      const params = highlightSymbol ? `?highlight=${encodeURIComponent(highlightSymbol)}` : ''
+      const res = await fetch(`/api/market/banner${params}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      if (!data.items?.length) throw new Error('empty')
+      setItems(data.items)
+      setError(null)
+    } catch {
+      setError('Piyasa verisi alınamadı')
+    } finally {
+      setLoading(false)
     }
   }, [highlightSymbol])
 
-  return { items, loading, highlightSymbol }
+  useEffect(() => {
+    setLoading(true)
+    load()
+    const timer = setInterval(load, 60_000)
+    return () => clearInterval(timer)
+  }, [load])
+
+  return { items, loading, error, highlightSymbol, retry: load }
 }

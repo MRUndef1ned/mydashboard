@@ -21,7 +21,7 @@ export function StockCard({ item, quote, flash, onRemove, sortMode }: StockCardP
       initial={sortMode ? false : { opacity: 0, scale: 0.95 }}
       animate={sortMode ? undefined : { opacity: 1, scale: 1 }}
       exit={sortMode ? undefined : { opacity: 0, scale: 0.95 }}
-      className={`group relative w-full min-w-[280px] max-w-[360px] flex-1 overflow-hidden rounded-2xl border bg-surface-2/60 p-5 transition-all duration-500 ${
+      className={`group relative w-full overflow-hidden rounded-2xl border bg-surface-2/60 p-5 transition-all duration-500 ${
         sortMode ? 'cursor-default select-none' : ''
       } ${
         flash === 'up'
@@ -44,7 +44,7 @@ export function StockCard({ item, quote, flash, onRemove, sortMode }: StockCardP
           </div>
           <div>
             <h3 className="font-semibold text-white">{displaySymbol(item.symbol)}</h3>
-            <p className="max-w-[160px] truncate text-[11px] text-zinc-500">
+            <p className="truncate text-[11px] text-zinc-500">
               {quote?.name ?? item.name}
             </p>
           </div>

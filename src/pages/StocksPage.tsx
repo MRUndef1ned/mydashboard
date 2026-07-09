@@ -8,6 +8,8 @@ import { useUI } from '../context/UIContext'
 import { StockCard } from '../components/stocks/StockCard'
 import { SortableStockGrid } from '../components/stocks/SortableStockGrid'
 import { AddStockModal } from '../components/stocks/AddStockModal'
+import { ConfirmDialog } from '../components/ConfirmDialog'
+import { STOCK_GRID_CLASS } from '../components/stocks/stockGrid'
 import { displaySymbol, formatPrice } from '../types/stocks'
 import type { WatchlistItem } from '../types/stocks'
 
@@ -18,6 +20,7 @@ export function StocksPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [filter, setFilter] = useState<'all' | 'BIST' | 'US'>('all')
   const [sortMode, setSortMode] = useState(false)
+  const [removeTarget, setRemoveTarget] = useState<WatchlistItem | null>(null)
 
   const filtered = useMemo(
     () => (filter === 'all' ? items : items.filter((i) => i.market === filter)),
@@ -40,9 +43,16 @@ export function StocksPage() {
     return count > 0 ? sum / count : 0
   }, [items, quotes])
 
-  function handleRemove(symbol: string) {
-    removeStock(symbol)
-    addToast(`${displaySymbol(symbol)} listeden kaldırıldı.`, 'info')
+  function requestRemove(symbol: string) {
+    const item = items.find((i) => i.symbol === symbol)
+    if (item) setRemoveTarget(item)
+  }
+
+  function confirmRemove() {
+    if (!removeTarget) return
+    removeStock(removeTarget.symbol)
+    addToast(`${displaySymbol(removeTarget.symbol)} listeden kaldırıldı.`, 'info')
+    setRemoveTarget(null)
   }
 
   function toggleSortMode() {
@@ -224,10 +234,10 @@ export function StocksPage() {
           quotes={quotes}
           flash={flash}
           onReorder={handleReorder}
-          onRemove={handleRemove}
+          onRemove={requestRemove}
         />
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className={STOCK_GRID_CLASS}>
           <AnimatePresence>
             {filtered.map((item) => (
               <StockCard
@@ -235,7 +245,7 @@ export function StocksPage() {
                 item={item}
                 quote={quotes[item.symbol]}
                 flash={flash[item.symbol]}
-                onRemove={handleRemove}
+                onRemove={requestRemove}
               />
             ))}
           </AnimatePresence>
@@ -243,6 +253,20 @@ export function StocksPage() {
       )}
 
       <AddStockModal open={modalOpen} onClose={() => setModalOpen(false)} />
+
+      <ConfirmDialog
+        open={removeTarget != null}
+        title="Hisseyi kaldır?"
+        message={
+          removeTarget
+            ? `${displaySymbol(removeTarget.symbol)} (${removeTarget.name}) izleme listenizden kaldırılacak. Bu işlemi onaylıyor musunuz?`
+            : ''
+        }
+        confirmLabel="Evet, Kaldır"
+        cancelLabel="Vazgeç"
+        onConfirm={confirmRemove}
+        onCancel={() => setRemoveTarget(null)}
+      />
     </div>
   )
 }

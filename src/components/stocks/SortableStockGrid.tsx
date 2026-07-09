@@ -19,6 +19,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { GripVertical } from 'lucide-react'
 import type { StockQuote, WatchlistItem } from '../../types/stocks'
 import { StockCard } from './StockCard'
+import { STOCK_GRID_CLASS } from './stockGrid'
 
 interface SortableStockGridProps {
   items: WatchlistItem[]
@@ -57,17 +58,17 @@ function SortableStockCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`relative touch-none cursor-grab active:cursor-grabbing ${
+      className={`relative h-full touch-none cursor-grab active:cursor-grabbing ${
         isDragging ? 'z-0 opacity-30' : 'z-auto opacity-100'
       }`}
     >
       <div
-        className={`relative rounded-2xl transition-shadow ${
+        className={`relative h-full rounded-2xl transition-shadow ${
           isDragging ? 'ring-2 ring-indigo-500/20' : 'ring-2 ring-indigo-500/30 ring-offset-2 ring-offset-surface-0'
         }`}
       >
         <div
-          className="pointer-events-none absolute -left-1 top-1/2 z-10 flex h-10 w-7 -translate-y-1/2 items-center justify-center rounded-lg border border-white/10 bg-surface-1 text-indigo-400 shadow-lg"
+          className="pointer-events-none absolute left-2 top-1/2 z-10 flex h-10 w-7 -translate-y-1/2 items-center justify-center rounded-lg border border-white/10 bg-surface-1 text-indigo-400 shadow-lg"
           aria-hidden
         >
           <GripVertical className="h-4 w-4" />
@@ -88,7 +89,7 @@ function DragOverlayCard({
   flash?: 'up' | 'down' | null
 }) {
   return (
-    <div className="w-[min(100vw-2rem,360px)] rotate-1 scale-[1.03] cursor-grabbing rounded-2xl shadow-2xl shadow-indigo-500/20 ring-2 ring-indigo-400/50">
+    <div className="w-full rotate-1 scale-[1.02] cursor-grabbing rounded-2xl shadow-2xl shadow-indigo-500/20 ring-2 ring-indigo-400/50">
       <StockCard item={item} quote={quote} flash={flash} onRemove={() => {}} sortMode />
     </div>
   )
@@ -137,7 +138,7 @@ export function SortableStockGrid({
       onDragCancel={() => setActiveId(null)}
     >
       <SortableContext items={ids} strategy={rectSortingStrategy}>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className={STOCK_GRID_CLASS}>
           {items.map((item) => (
             <SortableStockCard
               key={item.symbol}

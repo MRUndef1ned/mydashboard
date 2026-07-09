@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import { fetchQuotes, normalizeSymbol, searchStocks } from './yahoo.js'
 import { getCachedQuotes, setCachedQuotes, getPollInterval, isAnyMarketOpen } from './cache.js'
+import { fetchMarketBanner } from './marketBanner.js'
 
 const app = express()
 const PORT = Number(process.env.PORT) || 3001
@@ -58,6 +59,17 @@ app.get('/api/stocks/search', async (req, res) => {
   } catch (err) {
     console.error('Search error:', err)
     res.status(500).json({ error: 'Arama başarısız' })
+  }
+})
+
+app.get('/api/market/banner', async (req, res) => {
+  try {
+    const highlight = typeof req.query.highlight === 'string' ? req.query.highlight.trim() : undefined
+    const items = await fetchMarketBanner(highlight)
+    res.json({ items, updatedAt: Date.now() })
+  } catch (err) {
+    console.error('Banner fetch error:', err)
+    res.status(500).json({ error: 'Piyasa verisi alınamadı' })
   }
 })
 

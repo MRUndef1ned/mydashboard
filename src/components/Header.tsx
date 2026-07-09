@@ -4,6 +4,7 @@ import { getNavItemByPath } from '../config/routes'
 import { useUI } from '../context/UIContext'
 import { NotificationPanel } from './NotificationPanel'
 import { ProfileMenu } from './ProfileMenu'
+import { MarketTickerBar } from './MarketTickerBar'
 
 export function Header() {
   const location = useLocation()
@@ -11,7 +12,9 @@ export function Header() {
   const { toggleSidebar, toggleCommandOpen, addToast } = useUI()
 
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-white/6 bg-surface-0/60 px-4 py-4 backdrop-blur-xl sm:px-8">
+    <header className="sticky top-0 z-20 border-b border-white/6 bg-surface-0/60 backdrop-blur-xl">
+      <MarketTickerBar />
+      <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-8">
       <div className="flex items-center gap-3 sm:gap-4">
         <button
           onClick={toggleSidebar}
@@ -56,6 +59,7 @@ export function Header() {
 
         <NotificationPanel />
         <ProfileMenu />
+      </div>
       </div>
     </header>
   )

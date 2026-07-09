@@ -6,6 +6,7 @@ import { TransactionsTable } from '../components/TransactionsTable'
 import { PerformancePanel } from '../components/PerformancePanel'
 import { stats } from '../data/mockData'
 import { Calendar, Sparkles } from 'lucide-react'
+import { StockTickerStrip } from './StocksPage'
 
 function QuickActions() {
   const actions = [
@@ -76,6 +77,8 @@ export function OverviewPage() {
   return (
     <div className="space-y-6">
       <DateBanner />
+
+      <StockTickerStrip />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (

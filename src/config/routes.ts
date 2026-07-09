@@ -16,6 +16,13 @@ export const navItems: NavItem[] = [
     icon: 'layout-dashboard',
   },
   {
+    id: 'stocks',
+    path: '/stocks',
+    label: 'Borsa',
+    description: 'BIST ve ABD borsalarından canlı hisse fiyatları.',
+    icon: 'line-chart',
+  },
+  {
     id: 'analytics',
     path: '/analytics',
     label: 'Analitik',

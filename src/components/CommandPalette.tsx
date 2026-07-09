@@ -5,6 +5,7 @@ import {
   BarChart3,
   FolderKanban,
   LayoutDashboard,
+  LineChart,
   LogOut,
   MessageSquare,
   Plus,
@@ -19,6 +20,7 @@ import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 
 const iconMap = {
   'layout-dashboard': LayoutDashboard,
+  'line-chart': LineChart,
   'bar-chart-3': BarChart3,
   'folder-kanban': FolderKanban,
   users: Users,

@@ -4,6 +4,7 @@ import {
   BarChart3,
   FolderKanban,
   LayoutDashboard,
+  LineChart,
   MessageSquare,
   Settings,
   Users,
@@ -16,6 +17,7 @@ import { useUI } from '../context/UIContext'
 
 const iconMap = {
   'layout-dashboard': LayoutDashboard,
+  'line-chart': LineChart,
   'bar-chart-3': BarChart3,
   'folder-kanban': FolderKanban,
   users: Users,

@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { UIProvider } from './context/UIContext'
+import { WatchlistProvider } from './context/WatchlistContext'
 import { ProtectedRoute, PublicOnlyRoute } from './components/ProtectedRoute'
 import { DashboardLayout } from './layouts/DashboardLayout'
 import { AuthLayout } from './layouts/AuthLayout'
@@ -10,6 +11,7 @@ import { ProjectsPage } from './pages/ProjectsPage'
 import { TeamPage } from './pages/TeamPage'
 import { MessagesPage } from './pages/MessagesPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { StocksPage } from './pages/StocksPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ToastContainer } from './components/ToastContainer'
@@ -19,6 +21,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <UIProvider>
+          <WatchlistProvider>
           <Routes>
           <Route element={<PublicOnlyRoute />}>
             <Route element={<AuthLayout />}>
@@ -34,6 +37,7 @@ export default function App() {
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/team" element={<TeamPage />} />
               <Route path="/messages" element={<MessagesPage />} />
+              <Route path="/stocks" element={<StocksPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>
@@ -41,6 +45,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <ToastContainer />
+          </WatchlistProvider>
         </UIProvider>
       </AuthProvider>
     </BrowserRouter>

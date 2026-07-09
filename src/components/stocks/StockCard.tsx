@@ -3,6 +3,7 @@ import { TrendingDown, TrendingUp, X, Wifi } from 'lucide-react'
 import type { StockQuote } from '../../types/stocks'
 import type { WatchlistItem } from '../../types/stocks'
 import { displaySymbol, formatPrice, formatVolume } from '../../types/stocks'
+import { getMarketTheme } from '../../utils/stockViews'
 
 interface StockCardProps {
   item: WatchlistItem
@@ -14,6 +15,14 @@ interface StockCardProps {
 
 export function StockCard({ item, quote, flash, onRemove, sortMode }: StockCardProps) {
   const isUp = quote ? quote.change >= 0 : true
+  const theme = getMarketTheme(item.market)
+
+  const flashBorder =
+    flash === 'up'
+      ? 'border-emerald-500/50 ring-1 ring-emerald-500/30'
+      : flash === 'down'
+        ? 'border-rose-500/50 ring-1 ring-rose-500/30'
+        : `${theme.cardBorder} ${theme.cardHover}`
 
   return (
     <motion.div
@@ -21,32 +30,25 @@ export function StockCard({ item, quote, flash, onRemove, sortMode }: StockCardP
       initial={sortMode ? false : { opacity: 0, scale: 0.95 }}
       animate={sortMode ? undefined : { opacity: 1, scale: 1 }}
       exit={sortMode ? undefined : { opacity: 0, scale: 0.95 }}
-      className={`group relative w-full overflow-hidden rounded-2xl border bg-surface-2/60 p-5 transition-all duration-500 ${
+      className={`group relative w-full overflow-hidden rounded-2xl border p-5 shadow-lg transition-all duration-500 ${theme.cardBg} ${theme.glow} ${
         sortMode ? 'cursor-default select-none' : ''
-      } ${
-        flash === 'up'
-          ? 'border-emerald-500/40 bg-emerald-500/5'
-          : flash === 'down'
-            ? 'border-rose-500/40 bg-rose-500/5'
-            : 'border-white/6 hover:border-white/10'
-      }`}
+      } ${flashBorder}`}
     >
       <div className="mb-4 flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div
-            className={`flex h-11 w-11 items-center justify-center rounded-xl text-xs font-bold ${
-              item.market === 'BIST'
-                ? 'bg-rose-500/15 text-rose-400'
-                : 'bg-emerald-500/15 text-emerald-400'
-            }`}
+            className={`flex h-11 w-11 items-center justify-center rounded-xl text-xs font-bold ring-1 ring-inset ${theme.badge}`}
           >
             {displaySymbol(item.symbol).slice(0, 4)}
           </div>
           <div>
-            <h3 className="font-semibold text-white">{displaySymbol(item.symbol)}</h3>
-            <p className="truncate text-[11px] text-zinc-500">
-              {quote?.name ?? item.name}
-            </p>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-white">{displaySymbol(item.symbol)}</h3>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${theme.badge}`}>
+                {theme.label}
+              </span>
+            </div>
+            <p className="truncate text-[11px] text-zinc-500">{quote?.name ?? item.name}</p>
           </div>
         </div>
         <button
@@ -103,7 +105,7 @@ export function StockCard({ item, quote, flash, onRemove, sortMode }: StockCardP
             </div>
             <div>
               <p className="text-[10px] text-zinc-600">Borsa</p>
-              <p className="text-[11px] font-medium text-zinc-400">
+              <p className={`text-[11px] font-medium ${theme.accent}`}>
                 {item.market === 'BIST' ? 'BIST' : 'NASDAQ/NYSE'}
               </p>
             </div>

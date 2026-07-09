@@ -1,17 +1,30 @@
 import { Link } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { Plus, Radio, RefreshCw, WifiOff, ArrowUpDown, Check, GripVertical } from 'lucide-react'
+import { Plus, Radio, RefreshCw, WifiOff, Check, GripVertical, Move } from 'lucide-react'
 import { useWatchlist } from '../context/WatchlistContext'
 import { useStockStream } from '../hooks/useStockStream'
 import { useUI } from '../context/UIContext'
 import { StockCard } from '../components/stocks/StockCard'
 import { SortableStockGrid } from '../components/stocks/SortableStockGrid'
 import { AddStockModal } from '../components/stocks/AddStockModal'
+import { StockListView } from '../components/stocks/StockListView'
+import { StockTableView } from '../components/stocks/StockTableView'
+import { StockViewToolbar } from '../components/stocks/StockViewToolbar'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { STOCK_GRID_CLASS } from '../components/stocks/stockGrid'
 import { displaySymbol, formatPrice } from '../types/stocks'
 import type { WatchlistItem } from '../types/stocks'
+import {
+  loadSortMethod,
+  loadViewMode,
+  saveSortMethod,
+  saveViewMode,
+  sortStockItems,
+  getMarketTheme,
+  type StockSortMethod,
+  type StockViewMode,
+} from '../utils/stockViews'
 
 export function StocksPage() {
   const { items, symbols, removeStock, reorderStocks } = useWatchlist()
@@ -21,10 +34,17 @@ export function StocksPage() {
   const [filter, setFilter] = useState<'all' | 'BIST' | 'US'>('all')
   const [sortMode, setSortMode] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<WatchlistItem | null>(null)
+  const [viewMode, setViewMode] = useState<StockViewMode>(loadViewMode)
+  const [sortMethod, setSortMethod] = useState<StockSortMethod>(loadSortMethod)
 
   const filtered = useMemo(
     () => (filter === 'all' ? items : items.filter((i) => i.market === filter)),
     [items, filter],
+  )
+
+  const displayed = useMemo(
+    () => sortStockItems(filtered, quotes, sortMode ? 'custom' : sortMethod),
+    [filtered, quotes, sortMethod, sortMode],
   )
 
   const bistCount = items.filter((i) => i.market === 'BIST').length
@@ -61,7 +81,25 @@ export function StocksPage() {
       setSortMode(false)
     } else {
       setFilter('all')
+      setSortMethod('custom')
+      saveSortMethod('custom')
+      setViewMode('cards')
+      saveViewMode('cards')
       setSortMode(true)
+    }
+  }
+
+  function handleViewChange(mode: StockViewMode) {
+    setViewMode(mode)
+    saveViewMode(mode)
+  }
+
+  function handleSortChange(method: StockSortMethod) {
+    setSortMethod(method)
+    saveSortMethod(method)
+    if (method !== 'custom' && sortMode) {
+      setSortMode(false)
+      addToast('Manuel sıralama kapatıldı.', 'info')
     }
   }
 
@@ -78,8 +116,6 @@ export function StocksPage() {
     )
     reorderStocks(merged)
   }
-
-  const sortableItems = filter === 'all' ? items : filtered
 
   const lastUpdateStr = lastUpdated
     ? new Date(lastUpdated).toLocaleTimeString('tr-TR')
@@ -146,7 +182,9 @@ export function StocksPage() {
 
           <button
             onClick={toggleSortMode}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition ${
+            disabled={viewMode !== 'cards'}
+            title={viewMode !== 'cards' ? 'Manuel sıralama yalnızca kart görünümünde' : undefined}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition disabled:opacity-40 ${
               sortMode
                 ? 'border-indigo-500/40 bg-indigo-500/15 text-indigo-300 shadow-lg shadow-indigo-500/10'
                 : 'border-white/6 bg-white/3 text-zinc-400 hover:bg-white/5 hover:text-white'
@@ -155,12 +193,12 @@ export function StocksPage() {
             {sortMode ? (
               <>
                 <Check className="h-4 w-4" />
-                Sıralamayı Bitir
+                Konumu Kaydet
               </>
             ) : (
               <>
-                <ArrowUpDown className="h-4 w-4" />
-                Sırala
+                <Move className="h-4 w-4" />
+                Konumlandır
               </>
             )}
           </button>
@@ -181,6 +219,15 @@ export function StocksPage() {
           {error} — Terminalde <code className="font-mono text-rose-300">npm run dev</code> ile hem
           frontend hem API sunucusunun çalıştığından emin olun.
         </div>
+      )}
+
+      {!sortMode && (
+        <StockViewToolbar
+          viewMode={viewMode}
+          sortMethod={sortMethod}
+          onViewChange={handleViewChange}
+          onSortChange={handleSortChange}
+        />
       )}
 
       {/* Filter tabs */}
@@ -230,16 +277,29 @@ export function StocksPage() {
         </div>
       ) : sortMode ? (
         <SortableStockGrid
-          items={sortableItems}
+          items={displayed}
           quotes={quotes}
           flash={flash}
           onReorder={handleReorder}
           onRemove={requestRemove}
         />
+      ) : viewMode === 'list' ? (
+        <StockListView
+          items={displayed}
+          quotes={quotes}
+          flash={flash}
+          onRemove={requestRemove}
+        />
+      ) : viewMode === 'table' ? (
+        <StockTableView
+          items={displayed}
+          quotes={quotes}
+          onRemove={requestRemove}
+        />
       ) : (
         <div className={STOCK_GRID_CLASS}>
           <AnimatePresence>
-            {filtered.map((item) => (
+            {displayed.map((item) => (
               <StockCard
                 key={item.symbol}
                 item={item}
@@ -303,13 +363,17 @@ export function StockTickerStrip() {
       <div className="flex gap-px overflow-x-auto">
         {topItems.map((item) => {
           const q = quotes[item.symbol]
+          const theme = getMarketTheme(item.market)
           const isUp = q ? q.change >= 0 : true
           return (
             <div
               key={item.symbol}
-              className="min-w-[140px] flex-1 border-r border-white/4 px-4 py-3 last:border-0"
+              className={`min-w-[140px] flex-1 border-r border-white/4 px-4 py-3 last:border-0 ${theme.rowBg}`}
             >
-              <p className="text-xs font-semibold text-zinc-400">{displaySymbol(item.symbol)}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs font-semibold text-zinc-300">{displaySymbol(item.symbol)}</p>
+                <span className={`text-[9px] ${theme.accent}`}>{item.market === 'BIST' ? 'TR' : 'US'}</span>
+              </div>
               {q ? (
                 <>
                   <p className="mt-0.5 text-sm font-semibold tabular-nums text-white">

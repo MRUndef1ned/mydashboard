@@ -1,20 +1,23 @@
 import { Link } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { Plus, Radio, RefreshCw, WifiOff } from 'lucide-react'
+import { Plus, Radio, RefreshCw, WifiOff, ArrowUpDown, Check, GripVertical } from 'lucide-react'
 import { useWatchlist } from '../context/WatchlistContext'
 import { useStockStream } from '../hooks/useStockStream'
 import { useUI } from '../context/UIContext'
 import { StockCard } from '../components/stocks/StockCard'
+import { SortableStockGrid } from '../components/stocks/SortableStockGrid'
 import { AddStockModal } from '../components/stocks/AddStockModal'
 import { displaySymbol, formatPrice } from '../types/stocks'
+import type { WatchlistItem } from '../types/stocks'
 
 export function StocksPage() {
-  const { items, symbols, removeStock } = useWatchlist()
+  const { items, symbols, removeStock, reorderStocks } = useWatchlist()
   const { quotes, status, lastUpdated, error, flash, marketOpen } = useStockStream(symbols)
   const { addToast } = useUI()
   const [modalOpen, setModalOpen] = useState(false)
   const [filter, setFilter] = useState<'all' | 'BIST' | 'US'>('all')
+  const [sortMode, setSortMode] = useState(false)
 
   const filtered = useMemo(
     () => (filter === 'all' ? items : items.filter((i) => i.market === filter)),
@@ -41,6 +44,32 @@ export function StocksPage() {
     removeStock(symbol)
     addToast(`${displaySymbol(symbol)} listeden kaldırıldı.`, 'info')
   }
+
+  function toggleSortMode() {
+    if (sortMode) {
+      addToast('Liste sıralaması kaydedildi.')
+      setSortMode(false)
+    } else {
+      setFilter('all')
+      setSortMode(true)
+    }
+  }
+
+  function handleReorder(reordered: WatchlistItem[]) {
+    if (filter === 'all') {
+      reorderStocks(reordered)
+      return
+    }
+
+    const filteredSymbols = new Set(filtered.map((i) => i.symbol))
+    let idx = 0
+    const merged = items.map((item) =>
+      filteredSymbols.has(item.symbol) ? reordered[idx++]! : item,
+    )
+    reorderStocks(merged)
+  }
+
+  const sortableItems = filter === 'all' ? items : filtered
 
   const lastUpdateStr = lastUpdated
     ? new Date(lastUpdated).toLocaleTimeString('tr-TR')
@@ -106,8 +135,30 @@ export function StocksPage() {
           </div>
 
           <button
+            onClick={toggleSortMode}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition ${
+              sortMode
+                ? 'border-indigo-500/40 bg-indigo-500/15 text-indigo-300 shadow-lg shadow-indigo-500/10'
+                : 'border-white/6 bg-white/3 text-zinc-400 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            {sortMode ? (
+              <>
+                <Check className="h-4 w-4" />
+                Sıralamayı Bitir
+              </>
+            ) : (
+              <>
+                <ArrowUpDown className="h-4 w-4" />
+                Sırala
+              </>
+            )}
+          </button>
+
+          <button
             onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition hover:from-indigo-400 hover:to-indigo-500"
+            disabled={sortMode}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition hover:from-indigo-400 hover:to-indigo-500 disabled:opacity-40"
           >
             <Plus className="h-4 w-4" />
             Hisse Ekle
@@ -123,6 +174,7 @@ export function StocksPage() {
       )}
 
       {/* Filter tabs */}
+      {!sortMode && (
       <div className="flex gap-1 rounded-xl border border-white/6 bg-white/3 p-1 w-fit">
         {([
           { key: 'all' as const, label: `Tümü (${items.length})` },
@@ -142,6 +194,16 @@ export function StocksPage() {
           </button>
         ))}
       </div>
+      )}
+
+      {sortMode && (
+        <div className="flex items-center gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3">
+          <GripHint />
+          <p className="text-sm text-indigo-300">
+            Sol tutamaçtan veya karttan tutup sağa-sola sürükleyerek sıralayın
+          </p>
+        </div>
+      )}
 
       {/* Stock grid */}
       {filtered.length === 0 ? (
@@ -156,6 +218,14 @@ export function StocksPage() {
             İlk Hissenizi Ekleyin
           </button>
         </div>
+      ) : sortMode ? (
+        <SortableStockGrid
+          items={sortableItems}
+          quotes={quotes}
+          flash={flash}
+          onReorder={handleReorder}
+          onRemove={handleRemove}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <AnimatePresence>
@@ -173,6 +243,14 @@ export function StocksPage() {
       )}
 
       <AddStockModal open={modalOpen} onClose={() => setModalOpen(false)} />
+    </div>
+  )
+}
+
+function GripHint() {
+  return (
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400">
+      <GripVertical className="h-4 w-4" />
     </div>
   )
 }

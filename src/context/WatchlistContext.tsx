@@ -15,6 +15,7 @@ interface WatchlistContextValue {
   items: WatchlistItem[]
   addStock: (symbol: string, name: string, market: StockMarket) => boolean
   removeStock: (symbol: string) => void
+  reorderStocks: (items: WatchlistItem[]) => void
   hasStock: (symbol: string) => boolean
   symbols: string[]
 }
@@ -65,11 +66,15 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     setItems((prev) => prev.filter((i) => i.symbol !== symbol))
   }, [])
 
+  const reorderStocks = useCallback((next: WatchlistItem[]) => {
+    setItems(next)
+  }, [])
+
   const symbols = useMemo(() => items.map((i) => i.symbol), [items])
 
   const value = useMemo(
-    () => ({ items, addStock, removeStock, hasStock, symbols }),
-    [items, addStock, removeStock, hasStock, symbols],
+    () => ({ items, addStock, removeStock, reorderStocks, hasStock, symbols }),
+    [items, addStock, removeStock, reorderStocks, hasStock, symbols],
   )
 
   return <WatchlistContext.Provider value={value}>{children}</WatchlistContext.Provider>

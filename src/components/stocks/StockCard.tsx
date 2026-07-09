@@ -9,18 +9,21 @@ interface StockCardProps {
   quote?: StockQuote
   flash?: 'up' | 'down' | null
   onRemove: (symbol: string) => void
+  sortMode?: boolean
 }
 
-export function StockCard({ item, quote, flash, onRemove }: StockCardProps) {
+export function StockCard({ item, quote, flash, onRemove, sortMode }: StockCardProps) {
   const isUp = quote ? quote.change >= 0 : true
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className={`group relative overflow-hidden rounded-2xl border bg-surface-2/60 p-5 transition-all duration-500 ${
+      layout={!sortMode}
+      initial={sortMode ? false : { opacity: 0, scale: 0.95 }}
+      animate={sortMode ? undefined : { opacity: 1, scale: 1 }}
+      exit={sortMode ? undefined : { opacity: 0, scale: 0.95 }}
+      className={`group relative w-full min-w-[280px] max-w-[360px] flex-1 overflow-hidden rounded-2xl border bg-surface-2/60 p-5 transition-all duration-500 ${
+        sortMode ? 'cursor-default select-none' : ''
+      } ${
         flash === 'up'
           ? 'border-emerald-500/40 bg-emerald-500/5'
           : flash === 'down'
@@ -48,7 +51,8 @@ export function StockCard({ item, quote, flash, onRemove }: StockCardProps) {
         </div>
         <button
           onClick={() => onRemove(item.symbol)}
-          className="rounded-lg p-1 text-zinc-600 opacity-0 transition group-hover:opacity-100 hover:bg-white/5 hover:text-zinc-300"
+          disabled={sortMode}
+          className="rounded-lg p-1 text-zinc-600 opacity-0 transition group-hover:opacity-100 hover:bg-white/5 hover:text-zinc-300 disabled:hidden"
         >
           <X className="h-4 w-4" />
         </button>

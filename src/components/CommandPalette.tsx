@@ -12,6 +12,7 @@ import {
   Search,
   Settings,
   Users,
+  WalletCards,
 } from 'lucide-react'
 import { navItems } from '../config/routes'
 import { useUI } from '../context/UIContext'
@@ -21,6 +22,7 @@ import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 const iconMap = {
   'layout-dashboard': LayoutDashboard,
   'line-chart': LineChart,
+  'wallet-cards': WalletCards,
   'bar-chart-3': BarChart3,
   'folder-kanban': FolderKanban,
   users: Users,

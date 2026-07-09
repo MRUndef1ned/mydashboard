@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Settings,
   Users,
+  WalletCards,
   Zap,
   ChevronRight,
   X,
@@ -18,6 +19,7 @@ import { useUI } from '../context/UIContext'
 const iconMap = {
   'layout-dashboard': LayoutDashboard,
   'line-chart': LineChart,
+  'wallet-cards': WalletCards,
   'bar-chart-3': BarChart3,
   'folder-kanban': FolderKanban,
   users: Users,

@@ -23,6 +23,13 @@ export const navItems: NavItem[] = [
     icon: 'line-chart',
   },
   {
+    id: 'portfolio',
+    path: '/portfolio',
+    label: 'Portföy',
+    description: 'Hisse alımlarınızı, maliyetinizi ve kâr/zararı takip edin.',
+    icon: 'wallet-cards',
+  },
+  {
     id: 'analytics',
     path: '/analytics',
     label: 'Analitik',

@@ -1,6 +1,13 @@
+import { useLocation } from 'react-router-dom'
 import { Bell, Search, Plus, Menu } from 'lucide-react'
+import { getNavItemByPath } from '../config/routes'
+import { useAuth, getInitials } from '../context/AuthContext'
 
 export function Header() {
+  const location = useLocation()
+  const { user } = useAuth()
+  const page = getNavItemByPath(location.pathname)
+
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-white/6 bg-surface-0/60 px-8 py-4 backdrop-blur-xl">
       <div className="flex items-center gap-4">
@@ -8,12 +15,10 @@ export function Header() {
           <Menu className="h-5 w-5" />
         </button>
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-white">
-            Genel Bakış
+          <h2 className="text-xl font-semibold tracking-tight text-white transition-all duration-300">
+            {page.label}
           </h2>
-          <p className="text-sm text-zinc-500">
-            Hoş geldiniz, işletmenizin performansını takip edin.
-          </p>
+          <p className="text-sm text-zinc-500">{page.description}</p>
         </div>
       </div>
 
@@ -42,11 +47,11 @@ export function Header() {
 
         <div className="flex items-center gap-3 rounded-xl border border-white/6 bg-white/3 py-1.5 pl-1.5 pr-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-xs font-bold text-white">
-            AK
+            {user ? getInitials(user.name) : '??'}
           </div>
           <div className="hidden sm:block">
-            <p className="text-sm font-medium text-zinc-200">Ali Korkmaz</p>
-            <p className="text-[11px] text-zinc-500">Yönetici</p>
+            <p className="text-sm font-medium text-zinc-200">{user?.name ?? 'Kullanıcı'}</p>
+            <p className="text-[11px] text-zinc-500">{user?.role ?? '—'}</p>
           </div>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { NavLink } from 'react-router-dom'
 import {
   BarChart3,
   FolderKanban,
@@ -8,7 +9,7 @@ import {
   Zap,
   ChevronRight,
 } from 'lucide-react'
-import { navItems } from '../data/mockData'
+import { navItems } from '../config/routes'
 
 const iconMap = {
   'layout-dashboard': LayoutDashboard,
@@ -39,30 +40,38 @@ export function Sidebar() {
         {navItems.map((item) => {
           const Icon = iconMap[item.icon as keyof typeof iconMap]
           return (
-            <button
+            <NavLink
               key={item.id}
-              className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                item.active
-                  ? 'bg-gradient-to-r from-indigo-500/15 to-cyan-500/5 text-white shadow-inner shadow-indigo-500/10'
-                  : 'text-zinc-400 hover:bg-white/4 hover:text-zinc-200'
-              }`}
+              to={item.path}
+              end={item.path === '/'}
+              className={({ isActive }) =>
+                `group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 ${
+                  isActive
+                    ? 'bg-gradient-to-r from-indigo-500/15 to-cyan-500/5 text-white shadow-inner shadow-indigo-500/10'
+                    : 'text-zinc-400 hover:bg-white/4 hover:text-zinc-200'
+                }`
+              }
             >
-              <Icon
-                className={`h-[18px] w-[18px] shrink-0 ${
-                  item.active ? 'text-indigo-400' : 'text-zinc-500 group-hover:text-zinc-300'
-                }`}
-                strokeWidth={item.active ? 2.25 : 1.75}
-              />
-              <span className="flex-1 text-left">{item.label}</span>
-              {item.badge != null && item.badge > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-500 px-1.5 text-[10px] font-bold text-white">
-                  {item.badge}
-                </span>
+              {({ isActive }) => (
+                <>
+                  <Icon
+                    className={`h-[18px] w-[18px] shrink-0 transition-colors duration-300 ${
+                      isActive ? 'text-indigo-400' : 'text-zinc-500 group-hover:text-zinc-300'
+                    }`}
+                    strokeWidth={isActive ? 2.25 : 1.75}
+                  />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {item.badge != null && item.badge > 0 && (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-500 px-1.5 text-[10px] font-bold text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                  {isActive && (
+                    <ChevronRight className="h-4 w-4 text-indigo-400/60 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  )}
+                </>
               )}
-              {item.active && (
-                <ChevronRight className="h-4 w-4 text-indigo-400/60" />
-              )}
-            </button>
+            </NavLink>
           )
         })}
       </nav>

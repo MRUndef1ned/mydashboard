@@ -1,20 +1,3 @@
-export interface NavItem {
-  id: string
-  label: string
-  icon: string
-  active?: boolean
-  badge?: number
-}
-
-export const navItems: NavItem[] = [
-  { id: 'overview', label: 'Genel Bakış', icon: 'layout-dashboard', active: true },
-  { id: 'analytics', label: 'Analitik', icon: 'bar-chart-3' },
-  { id: 'projects', label: 'Projeler', icon: 'folder-kanban' },
-  { id: 'team', label: 'Ekip', icon: 'users' },
-  { id: 'messages', label: 'Mesajlar', icon: 'message-square', badge: 3 },
-  { id: 'settings', label: 'Ayarlar', icon: 'settings' },
-]
-
 export const stats = [
   {
     id: 'revenue',

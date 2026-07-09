@@ -6,7 +6,7 @@ import { useWatchlist } from '../context/WatchlistContext'
 import { useStockStream } from '../hooks/useStockStream'
 import { useUI } from '../context/UIContext'
 import { StockCard } from '../components/stocks/StockCard'
-import { SortableStockGrid } from '../components/stocks/SortableStockGrid'
+import { SortableStocks } from '../components/stocks/SortableStocks'
 import { AddStockModal } from '../components/stocks/AddStockModal'
 import { StockListView } from '../components/stocks/StockListView'
 import { StockTableView } from '../components/stocks/StockTableView'
@@ -83,8 +83,6 @@ export function StocksPage() {
       setFilter('all')
       setSortMethod('custom')
       saveSortMethod('custom')
-      setViewMode('cards')
-      saveViewMode('cards')
       setSortMode(true)
     }
   }
@@ -182,9 +180,7 @@ export function StocksPage() {
 
           <button
             onClick={toggleSortMode}
-            disabled={viewMode !== 'cards'}
-            title={viewMode !== 'cards' ? 'Manuel sıralama yalnızca kart görünümünde' : undefined}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition disabled:opacity-40 ${
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition ${
               sortMode
                 ? 'border-indigo-500/40 bg-indigo-500/15 text-indigo-300 shadow-lg shadow-indigo-500/10'
                 : 'border-white/6 bg-white/3 text-zinc-400 hover:bg-white/5 hover:text-white'
@@ -221,14 +217,13 @@ export function StocksPage() {
         </div>
       )}
 
-      {!sortMode && (
-        <StockViewToolbar
-          viewMode={viewMode}
-          sortMethod={sortMethod}
-          onViewChange={handleViewChange}
-          onSortChange={handleSortChange}
-        />
-      )}
+      <StockViewToolbar
+        viewMode={viewMode}
+        sortMethod={sortMethod}
+        onViewChange={handleViewChange}
+        onSortChange={handleSortChange}
+        sortDisabled={sortMode}
+      />
 
       {/* Filter tabs */}
       {!sortMode && (
@@ -257,7 +252,7 @@ export function StocksPage() {
         <div className="flex items-center gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3">
           <GripHint />
           <p className="text-sm text-indigo-300">
-            Hisseleri tutup ekranda serbestçe gezdirin, istediğiniz konuma bırakın
+            Hisseleri tutup ekranda serbestçe gezdirin — kart, liste veya tablo görünümünde
           </p>
         </div>
       )}
@@ -276,12 +271,12 @@ export function StocksPage() {
           </button>
         </div>
       ) : sortMode ? (
-        <SortableStockGrid
+        <SortableStocks
+          viewMode={viewMode}
           items={displayed}
           quotes={quotes}
           flash={flash}
           onReorder={handleReorder}
-          onRemove={requestRemove}
         />
       ) : viewMode === 'list' ? (
         <StockListView

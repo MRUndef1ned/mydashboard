@@ -12,6 +12,7 @@ interface StockViewToolbarProps {
   onViewChange: (mode: StockViewMode) => void
   onSortChange: (method: StockSortMethod) => void
   disabled?: boolean
+  sortDisabled?: boolean
 }
 
 const viewIcons = {
@@ -26,6 +27,7 @@ export function StockViewToolbar({
   onViewChange,
   onSortChange,
   disabled,
+  sortDisabled,
 }: StockViewToolbarProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -54,7 +56,7 @@ export function StockViewToolbar({
         <span className="text-xs text-zinc-600">Sırala:</span>
         <select
           value={sortMethod}
-          disabled={disabled}
+          disabled={disabled || sortDisabled}
           onChange={(e) => onSortChange(e.target.value as StockSortMethod)}
           className="rounded-xl border border-white/6 bg-surface-2/80 px-3 py-1.5 text-xs font-medium text-zinc-300 outline-none transition focus:border-indigo-500/40 disabled:opacity-40"
         >

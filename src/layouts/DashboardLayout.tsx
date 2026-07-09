@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from '../components/Sidebar'
 import { Header } from '../components/Header'
 import { PageTransition } from '../components/PageTransition'
+import { CommandPalette } from '../components/CommandPalette'
 
 export function DashboardLayout() {
   const location = useLocation()
@@ -10,9 +11,9 @@ export function DashboardLayout() {
   return (
     <div className="mesh-bg min-h-screen">
       <Sidebar />
-      <main className="ml-64 min-h-screen">
+      <main className="min-h-screen lg:ml-64">
         <Header />
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <AnimatePresence mode="wait">
             <PageTransition key={location.pathname}>
               <Outlet />
@@ -20,6 +21,7 @@ export function DashboardLayout() {
           </AnimatePresence>
         </div>
       </main>
+      <CommandPalette />
     </div>
   )
 }

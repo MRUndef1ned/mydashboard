@@ -2,7 +2,9 @@ export const stats = [
   {
     id: 'revenue',
     label: 'Toplam Gelir',
-    value: '₺284.520',
+    numericValue: 284520,
+    prefix: '₺',
+    decimals: 0,
     change: '+12.5%',
     trend: 'up' as const,
     icon: 'wallet',
@@ -12,7 +14,9 @@ export const stats = [
   {
     id: 'users',
     label: 'Aktif Kullanıcı',
-    value: '12.847',
+    numericValue: 12847,
+    prefix: '',
+    decimals: 0,
     change: '+8.2%',
     trend: 'up' as const,
     icon: 'users',
@@ -22,7 +26,9 @@ export const stats = [
   {
     id: 'orders',
     label: 'Siparişler',
-    value: '1.429',
+    numericValue: 1429,
+    prefix: '',
+    decimals: 0,
     change: '-2.4%',
     trend: 'down' as const,
     icon: 'shopping-bag',
@@ -32,7 +38,9 @@ export const stats = [
   {
     id: 'conversion',
     label: 'Dönüşüm Oranı',
-    value: '%3.24',
+    numericValue: 3.24,
+    prefix: '%',
+    decimals: 2,
     change: '+0.8%',
     trend: 'up' as const,
     icon: 'trending-up',

@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useUI } from '../context/UIContext'
 import { Bell, Lock, User, Shield } from 'lucide-react'
 
 export function SettingsPage() {
   const { user, logout } = useAuth()
+  const { addToast } = useUI()
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
@@ -41,7 +43,10 @@ export function SettingsPage() {
             />
           </div>
         </div>
-        <button className="mt-4 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-5 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition hover:from-indigo-400 hover:to-indigo-500">
+        <button
+          onClick={() => addToast('Profil bilgileri kaydedildi.')}
+          className="mt-4 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-5 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition hover:from-indigo-400 hover:to-indigo-500"
+        >
           Değişiklikleri Kaydet
         </button>
       </section>

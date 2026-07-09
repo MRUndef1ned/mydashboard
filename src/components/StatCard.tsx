@@ -6,6 +6,7 @@ import {
   TrendingDown,
   type LucideIcon,
 } from 'lucide-react'
+import { useCountUp } from '../hooks/useCountUp'
 
 const iconMap: Record<string, LucideIcon> = {
   wallet: Wallet,
@@ -16,7 +17,9 @@ const iconMap: Record<string, LucideIcon> = {
 
 interface StatCardProps {
   label: string
-  value: string
+  numericValue: number
+  prefix?: string
+  decimals?: number
   change: string
   trend: 'up' | 'down'
   icon: string
@@ -24,9 +27,17 @@ interface StatCardProps {
   accent: string
 }
 
+function formatNumber(value: string, decimals: number) {
+  const num = Number(value)
+  if (decimals > 0) return num.toFixed(decimals)
+  return Math.round(num).toLocaleString('tr-TR')
+}
+
 export function StatCard({
   label,
-  value,
+  numericValue,
+  prefix = '',
+  decimals = 0,
   change,
   trend,
   icon,
@@ -35,9 +46,14 @@ export function StatCard({
 }: StatCardProps) {
   const Icon = iconMap[icon] ?? TrendingUp
   const TrendIcon = trend === 'up' ? TrendingUp : TrendingDown
+  const animated = useCountUp(numericValue, 1400, decimals)
+  const display =
+    prefix === '%'
+      ? `%${formatNumber(animated, decimals)}`
+      : `${prefix}${formatNumber(animated, decimals)}`
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-white/6 bg-surface-2/60 p-5 transition-all duration-300 hover:border-white/10 hover:bg-surface-2">
+    <div className="group relative overflow-hidden rounded-2xl border border-white/6 bg-surface-2/60 p-5 transition-all duration-300 hover:border-white/10 hover:bg-surface-2 hover:shadow-lg hover:shadow-indigo-500/5">
       <div
         className={`absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br ${gradient} blur-2xl transition-opacity group-hover:opacity-100 opacity-60`}
       />
@@ -58,7 +74,7 @@ export function StatCard({
           </div>
         </div>
         <p className="mb-1 text-sm text-zinc-500">{label}</p>
-        <p className="text-2xl font-semibold tracking-tight text-white">{value}</p>
+        <p className="text-2xl font-semibold tracking-tight text-white tabular-nums">{display}</p>
       </div>
     </div>
   )

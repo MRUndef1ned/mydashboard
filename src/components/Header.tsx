@@ -1,59 +1,61 @@
 import { useLocation } from 'react-router-dom'
-import { Bell, Search, Plus, Menu } from 'lucide-react'
+import { Plus, Menu, Search } from 'lucide-react'
 import { getNavItemByPath } from '../config/routes'
-import { useAuth, getInitials } from '../context/AuthContext'
+import { useUI } from '../context/UIContext'
+import { NotificationPanel } from './NotificationPanel'
+import { ProfileMenu } from './ProfileMenu'
 
 export function Header() {
   const location = useLocation()
-  const { user } = useAuth()
   const page = getNavItemByPath(location.pathname)
+  const { toggleSidebar, toggleCommandOpen, addToast } = useUI()
 
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-white/6 bg-surface-0/60 px-8 py-4 backdrop-blur-xl">
-      <div className="flex items-center gap-4">
-        <button className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/5 hover:text-white lg:hidden">
+    <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-white/6 bg-surface-0/60 px-4 py-4 backdrop-blur-xl sm:px-8">
+      <div className="flex items-center gap-3 sm:gap-4">
+        <button
+          onClick={toggleSidebar}
+          className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/5 hover:text-white lg:hidden"
+        >
           <Menu className="h-5 w-5" />
         </button>
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-white transition-all duration-300">
+          <h2 className="text-lg font-semibold tracking-tight text-white transition-all duration-300 sm:text-xl">
             {page.label}
           </h2>
-          <p className="text-sm text-zinc-500">{page.description}</p>
+          <p className="hidden text-sm text-zinc-500 sm:block">{page.description}</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-          <input
-            type="text"
-            placeholder="Ara..."
-            className="w-64 rounded-xl border border-white/6 bg-white/3 py-2 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/40 focus:bg-white/5 focus:ring-2 focus:ring-indigo-500/15"
-          />
-          <kbd className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500 lg:inline">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <button
+          onClick={toggleCommandOpen}
+          className="relative hidden items-center gap-2 rounded-xl border border-white/6 bg-white/3 py-2 pl-10 pr-12 text-sm text-zinc-500 transition hover:bg-white/5 hover:text-zinc-400 md:flex"
+        >
+          <Search className="absolute left-3 h-4 w-4" />
+          Ara...
+          <kbd className="absolute right-3 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px]">
             ⌘K
           </kbd>
-        </div>
+        </button>
 
-        <button className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition hover:from-indigo-400 hover:to-indigo-500">
+        <button
+          onClick={toggleCommandOpen}
+          className="rounded-xl border border-white/6 bg-white/3 p-2.5 text-zinc-400 transition hover:bg-white/5 hover:text-white md:hidden"
+        >
+          <Search className="h-[18px] w-[18px]" />
+        </button>
+
+        <button
+          onClick={() => addToast('Proje oluşturma sihirbazı yakında eklenecek.', 'info')}
+          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition hover:from-indigo-400 hover:to-indigo-500 sm:px-4"
+        >
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Yeni Proje</span>
         </button>
 
-        <button className="relative rounded-xl border border-white/6 bg-white/3 p-2.5 text-zinc-400 transition hover:bg-white/5 hover:text-white">
-          <Bell className="h-[18px] w-[18px]" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-surface-0" />
-        </button>
-
-        <div className="flex items-center gap-3 rounded-xl border border-white/6 bg-white/3 py-1.5 pl-1.5 pr-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-xs font-bold text-white">
-            {user ? getInitials(user.name) : '??'}
-          </div>
-          <div className="hidden sm:block">
-            <p className="text-sm font-medium text-zinc-200">{user?.name ?? 'Kullanıcı'}</p>
-            <p className="text-[11px] text-zinc-500">{user?.role ?? '—'}</p>
-          </div>
-        </div>
+        <NotificationPanel />
+        <ProfileMenu />
       </div>
     </header>
   )

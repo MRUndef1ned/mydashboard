@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { StatCard } from '../components/StatCard'
 import { RevenueChart } from '../components/RevenueChart'
 import { ActivityFeed } from '../components/ActivityFeed'
@@ -34,6 +35,20 @@ function QuickActions() {
 }
 
 function DateBanner() {
+  const [now, setNow] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const formatted = now.toLocaleDateString('tr-TR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    weekday: 'long',
+  })
+
   return (
     <div className="flex items-center justify-between rounded-2xl border border-white/6 bg-gradient-to-r from-indigo-500/8 via-transparent to-cyan-500/8 px-6 py-4">
       <div className="flex items-center gap-3">
@@ -41,7 +56,7 @@ function DateBanner() {
           <Calendar className="h-5 w-5 text-indigo-400" />
         </div>
         <div>
-          <p className="text-sm font-medium text-white">9 Temmuz 2026, Perşembe</p>
+          <p className="text-sm font-medium text-white">{formatted}</p>
           <p className="text-xs text-zinc-500">Bu ay 3 yeni proje ve 12 tamamlanan görev</p>
         </div>
       </div>

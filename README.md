@@ -7,8 +7,12 @@ Koyu tonlarda, modern ve şık bir dashboard arayüzü. İlk aşamada görsel ka
 - Koyu tema (indigo / cyan vurgu renkleri)
 - Yumuşak sayfa geçiş animasyonları (Framer Motion)
 - Kimlik doğrulama (giriş / kayıt, korumalı rotalar)
-- 6 dashboard sayfası: Genel Bakış, Analitik, Projeler, Ekip, Mesajlar, Ayarlar
-- Glassmorphism kartlar ve gradient arka plan
+- Komut paleti (`⌘K` / `Ctrl+K`) — hızlı sayfa geçişi
+- Bildirim paneli ve toast mesajları
+- Animasyonlu KPI sayaçları
+- Mobil uyumlu açılır sidebar
+- Profil menüsü (ayarlar, çıkış)
+- 6 dashboard sayfası
 
 ## Kurulum
 
@@ -40,5 +44,4 @@ Yeni hesap oluşturmak için kayıt sayfasını kullanabilirsiniz. Oturum bilgis
 ## Sonraki Adımlar
 
 - Backend API entegrasyonu
-- Mobil responsive sidebar
 - Gerçek zamanlı veri

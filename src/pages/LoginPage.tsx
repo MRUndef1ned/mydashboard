@@ -2,9 +2,11 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useUI } from '../context/UIContext'
 
 export function LoginPage() {
   const { login } = useAuth()
+  const { addToast } = useUI()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,6 +23,7 @@ export function LoginPage() {
     setIsSubmitting(false)
 
     if (result.success) {
+      addToast('Hoş geldiniz! Başarıyla giriş yaptınız.')
       navigate('/', { replace: true })
     } else {
       setError(result.error ?? 'Giriş başarısız.')

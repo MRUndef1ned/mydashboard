@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   BarChart3,
   FolderKanban,
@@ -8,8 +9,10 @@ import {
   Users,
   Zap,
   ChevronRight,
+  X,
 } from 'lucide-react'
 import { navItems } from '../config/routes'
+import { useUI } from '../context/UIContext'
 
 const iconMap = {
   'layout-dashboard': LayoutDashboard,
@@ -20,20 +23,28 @@ const iconMap = {
   settings: Settings,
 } as const
 
-export function Sidebar() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <aside className="fixed left-0 top-0 z-30 flex h-screen w-64 flex-col border-r border-white/6 bg-surface-1/80 backdrop-blur-xl">
-      <div className="flex items-center gap-3 px-6 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 shadow-lg shadow-indigo-500/25">
-          <Zap className="h-5 w-5 text-white" strokeWidth={2.5} />
+    <>
+      <div className="flex items-center justify-between px-6 py-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 shadow-lg shadow-indigo-500/25">
+            <Zap className="h-5 w-5 text-white" strokeWidth={2.5} />
+          </div>
+          <div>
+            <h1 className="text-base font-semibold tracking-tight text-white">Nexus</h1>
+            <p className="text-[11px] text-zinc-500">Dashboard v1.0</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-base font-semibold tracking-tight text-white">Nexus</h1>
-          <p className="text-[11px] text-zinc-500">Dashboard v1.0</p>
-        </div>
+        <button
+          onClick={onNavigate}
+          className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-white/5 hover:text-white lg:hidden"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-2">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
         <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
           Menü
         </p>
@@ -44,6 +55,7 @@ export function Sidebar() {
               key={item.id}
               to={item.path}
               end={item.path === '/'}
+              onClick={onNavigate}
               className={({ isActive }) =>
                 `group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 ${
                   isActive
@@ -88,6 +100,45 @@ export function Sidebar() {
           Planı Yükselt
         </button>
       </div>
-    </aside>
+    </>
+  )
+}
+
+export function Sidebar() {
+  const { sidebarOpen, setSidebarOpen } = useUI()
+  const close = () => setSidebarOpen(false)
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-64 flex-col border-r border-white/6 bg-surface-1/80 backdrop-blur-xl lg:flex">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile sidebar */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+              onClick={close}
+            />
+            <motion.aside
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="fixed left-0 top-0 z-50 flex h-screen w-72 flex-col border-r border-white/6 bg-surface-1/95 backdrop-blur-xl lg:hidden"
+            >
+              <SidebarContent onNavigate={close} />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   )
 }

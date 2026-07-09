@@ -200,7 +200,7 @@ export function StocksPage() {
         <div className="flex items-center gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3">
           <GripHint />
           <p className="text-sm text-indigo-300">
-            Sol tutamaçtan veya karttan tutup sağa-sola sürükleyerek sıralayın
+            Hisseleri tutup ekranda serbestçe gezdirin, istediğiniz konuma bırakın
           </p>
         </div>
       )}

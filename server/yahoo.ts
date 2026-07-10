@@ -134,6 +134,47 @@ export async function fetchQuotes(symbols: string[]): Promise<StockQuote[]> {
   }
 }
 
+export interface HistoricalPoint {
+  time: number
+  close: number
+}
+
+export interface HistoricalSeries {
+  symbol: string
+  points: HistoricalPoint[]
+}
+
+export async function fetchHistoricalSeries(
+  symbols: string[],
+  range: '1mo' | '3mo' | '1y',
+): Promise<HistoricalSeries[]> {
+  const unique = [...new Set(symbols)].slice(0, 25)
+  const interval = range === '1mo' ? '1d' : range === '3mo' ? '1d' : '1wk'
+
+  const series = await Promise.all(
+    unique.map(async (symbol): Promise<HistoricalSeries | null> => {
+      try {
+        const data = await yahooFetch(
+          `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${interval}&range=${range}&events=history`,
+        )
+        const result = data?.chart?.result?.[0]
+        const timestamps = result?.timestamp as number[] | undefined
+        const closes = result?.indicators?.quote?.[0]?.close as Array<number | null> | undefined
+        if (!timestamps || !closes) return null
+
+        const points = timestamps
+          .map((time, index) => ({ time: time * 1000, close: closes[index] }))
+          .filter((point): point is HistoricalPoint => Number.isFinite(point.close))
+        return points.length > 1 ? { symbol, points } : null
+      } catch {
+        return null
+      }
+    }),
+  )
+
+  return series.filter((item): item is HistoricalSeries => item !== null)
+}
+
 export async function searchStocks(query: string): Promise<SearchResult[]> {
   if (!query.trim()) return []
 

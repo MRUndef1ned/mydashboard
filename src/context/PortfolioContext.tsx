@@ -7,81 +7,138 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { NewPortfolioPosition, PortfolioPosition } from '../types/portfolio'
+import {
+  calculateHoldings,
+  type NewPortfolioTransaction,
+  type PortfolioHolding,
+  type PortfolioTransaction,
+} from '../types/portfolio'
 
 const STORAGE_KEY = 'nexus_portfolio'
 
 interface PortfolioContextValue {
-  positions: PortfolioPosition[]
+  transactions: PortfolioTransaction[]
+  holdings: PortfolioHolding[]
   symbols: string[]
-  addPosition: (position: NewPortfolioPosition) => void
-  removePosition: (id: string) => void
+  addTransaction: (transaction: NewPortfolioTransaction) => void
+  updateTransaction: (id: string, transaction: NewPortfolioTransaction) => void
+  removeTransaction: (id: string) => void
 }
 
 const PortfolioContext = createContext<PortfolioContextValue | null>(null)
 
-function loadPortfolio(): PortfolioPosition[] {
+function loadPortfolio(): PortfolioTransaction[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
 
-    return parsed.filter(
-      (item): item is PortfolioPosition =>
-        typeof item?.id === 'string' &&
-        typeof item?.symbol === 'string' &&
-        typeof item?.name === 'string' &&
-        (item?.market === 'BIST' || item?.market === 'US') &&
-        Number.isFinite(item?.quantity) &&
-        item.quantity > 0 &&
-        Number.isFinite(item?.buyPrice) &&
-        item.buyPrice > 0 &&
-        typeof item?.buyDate === 'string',
-    )
+    return parsed
+      .map((item): PortfolioTransaction | null => {
+        if (
+          typeof item?.id !== 'string' ||
+          typeof item?.symbol !== 'string' ||
+          typeof item?.name !== 'string' ||
+          (item?.market !== 'BIST' && item?.market !== 'US') ||
+          !Number.isFinite(item?.quantity) ||
+          item.quantity <= 0
+        ) {
+          return null
+        }
+
+        // v1 portföy kayıtlarını işlem defterine kayıpsız taşı.
+        if (Number.isFinite(item.buyPrice) && typeof item.buyDate === 'string') {
+          return {
+            id: item.id,
+            type: 'buy',
+            symbol: item.symbol,
+            name: item.name,
+            market: item.market,
+            quantity: item.quantity,
+            price: item.buyPrice,
+            date: item.buyDate,
+            createdAt: Number.isFinite(item.createdAt) ? item.createdAt : Date.now(),
+          }
+        }
+
+        if (
+          (item.type === 'buy' || item.type === 'sell') &&
+          Number.isFinite(item.price) &&
+          item.price > 0 &&
+          typeof item.date === 'string'
+        ) {
+          return item as PortfolioTransaction
+        }
+        return null
+      })
+      .filter((item): item is PortfolioTransaction => item !== null)
   } catch {
     return []
   }
 }
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
-  const [positions, setPositions] = useState<PortfolioPosition[]>(loadPortfolio)
+  const [transactions, setTransactions] = useState<PortfolioTransaction[]>(loadPortfolio)
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(positions))
-  }, [positions])
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions))
+  }, [transactions])
 
-  const addPosition = useCallback((position: NewPortfolioPosition) => {
+  const normalize = useCallback((transaction: NewPortfolioTransaction) => {
     const symbol =
-      position.market === 'BIST'
-        ? position.symbol.endsWith('.IS')
-          ? position.symbol
-          : `${position.symbol}.IS`
-        : position.symbol.replace('.IS', '')
+      transaction.market === 'BIST'
+        ? transaction.symbol.endsWith('.IS')
+          ? transaction.symbol
+          : `${transaction.symbol}.IS`
+        : transaction.symbol.replace('.IS', '')
+    return { ...transaction, symbol }
+  }, [])
 
-    setPositions((current) => [
+  const addTransaction = useCallback((transaction: NewPortfolioTransaction) => {
+    setTransactions((current) => [
       ...current,
       {
-        ...position,
-        symbol,
+        ...normalize(transaction),
         id: crypto.randomUUID(),
         createdAt: Date.now(),
       },
     ])
+  }, [normalize])
+
+  const updateTransaction = useCallback((id: string, transaction: NewPortfolioTransaction) => {
+    setTransactions((current) =>
+      current.map((item) => (item.id === id ? { ...item, ...normalize(transaction) } : item)),
+    )
+  }, [normalize])
+
+  const removeTransaction = useCallback((id: string) => {
+    setTransactions((current) => current.filter((transaction) => transaction.id !== id))
   }, [])
 
-  const removePosition = useCallback((id: string) => {
-    setPositions((current) => current.filter((position) => position.id !== id))
-  }, [])
-
+  const holdings = useMemo(() => calculateHoldings(transactions), [transactions])
   const symbols = useMemo(
-    () => [...new Set(positions.map((position) => position.symbol))],
-    [positions],
+    () => [...new Set(holdings.filter((holding) => holding.quantity > 0).map((holding) => holding.symbol))],
+    [holdings],
   )
 
   const value = useMemo(
-    () => ({ positions, symbols, addPosition, removePosition }),
-    [positions, symbols, addPosition, removePosition],
+    () => ({
+      transactions,
+      holdings,
+      symbols,
+      addTransaction,
+      updateTransaction,
+      removeTransaction,
+    }),
+    [
+      transactions,
+      holdings,
+      symbols,
+      addTransaction,
+      updateTransaction,
+      removeTransaction,
+    ],
   )
 
   return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>

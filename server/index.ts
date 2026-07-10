@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import { fetchQuotes, normalizeSymbol, searchStocks } from './yahoo.js'
+import { fetchHistoricalSeries, fetchQuotes, normalizeSymbol, searchStocks } from './yahoo.js'
 import { getCachedQuotes, setCachedQuotes, getPollInterval, isAnyMarketOpen } from './cache.js'
 import { fetchMarketBanner } from './marketBanner.js'
 
@@ -59,6 +59,26 @@ app.get('/api/stocks/search', async (req, res) => {
   } catch (err) {
     console.error('Search error:', err)
     res.status(500).json({ error: 'Arama başarısız' })
+  }
+})
+
+app.get('/api/stocks/history', async (req, res) => {
+  try {
+    const raw = typeof req.query.symbols === 'string' ? req.query.symbols : ''
+    const symbols = raw.split(',').map((symbol) => symbol.trim()).filter(Boolean)
+    const requestedRange = typeof req.query.range === 'string' ? req.query.range : '1mo'
+    const range =
+      requestedRange === '3mo' || requestedRange === '1y' ? requestedRange : '1mo'
+
+    if (symbols.length === 0) {
+      return res.status(400).json({ error: 'symbols parametresi gerekli' })
+    }
+
+    const series = await fetchHistoricalSeries(symbols, range)
+    res.json({ series, range, updatedAt: Date.now() })
+  } catch (err) {
+    console.error('History fetch error:', err)
+    res.status(500).json({ error: 'Tarihsel fiyat verisi alınamadı' })
   }
 })
 

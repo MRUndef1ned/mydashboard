@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LineChart,
   MessageSquare,
+  NotebookPen,
   Settings,
   Users,
   WalletCards,
@@ -24,6 +25,7 @@ const iconMap = {
   'folder-kanban': FolderKanban,
   users: Users,
   'message-square': MessageSquare,
+  'notebook-pen': NotebookPen,
   settings: Settings,
 } as const
 

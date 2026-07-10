@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext'
 import { UIProvider } from './context/UIContext'
 import { WatchlistProvider } from './context/WatchlistContext'
 import { PortfolioProvider } from './context/PortfolioContext'
+import { NotesProvider } from './context/NotesContext'
 import { ProtectedRoute, PublicOnlyRoute } from './components/ProtectedRoute'
 import { DashboardLayout } from './layouts/DashboardLayout'
 import { AuthLayout } from './layouts/AuthLayout'
@@ -14,6 +15,7 @@ import { MessagesPage } from './pages/MessagesPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { StocksPage } from './pages/StocksPage'
 import { PortfolioPage } from './pages/PortfolioPage'
+import { NotesPage } from './pages/NotesPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ToastContainer } from './components/ToastContainer'
@@ -25,6 +27,7 @@ export default function App() {
         <UIProvider>
           <WatchlistProvider>
           <PortfolioProvider>
+          <NotesProvider>
           <Routes>
           <Route element={<PublicOnlyRoute />}>
             <Route element={<AuthLayout />}>
@@ -42,6 +45,7 @@ export default function App() {
               <Route path="/messages" element={<MessagesPage />} />
               <Route path="/stocks" element={<StocksPage />} />
               <Route path="/portfolio" element={<PortfolioPage />} />
+              <Route path="/notes" element={<NotesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>
@@ -49,6 +53,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <ToastContainer />
+          </NotesProvider>
           </PortfolioProvider>
           </WatchlistProvider>
         </UIProvider>

@@ -44,6 +44,13 @@ export const navItems: NavItem[] = [
     icon: 'folder-kanban',
   },
   {
+    id: 'notes',
+    path: '/notes',
+    label: 'Notlar',
+    description: 'Fikirlerinizi, hatırlatmaları ve önemli bilgileri kaydedin.',
+    icon: 'notebook-pen',
+  },
+  {
     id: 'team',
     path: '/team',
     label: 'Ekip',

@@ -5,7 +5,11 @@ import { usePortfolio } from '../../context/PortfolioContext'
 import { searchStocks } from '../../hooks/useStockStream'
 import { useUI } from '../../context/UIContext'
 import { displaySymbol, type SearchResult, type StockMarket } from '../../types/stocks'
-import type { PortfolioTransaction, PortfolioTransactionType } from '../../types/portfolio'
+import {
+  isValidTransactionLedger,
+  type PortfolioTransaction,
+  type PortfolioTransactionType,
+} from '../../types/portfolio'
 
 interface TransactionModalProps {
   open: boolean
@@ -26,7 +30,7 @@ export function TransactionModal({
   initialType = 'buy',
   onClose,
 }: TransactionModalProps) {
-  const { holdings, addTransaction, updateTransaction } = usePortfolio()
+  const { transactions, holdings, addTransaction, updateTransaction } = usePortfolio()
   const { addToast } = useUI()
   const [type, setType] = useState<PortfolioTransactionType>(initialType)
   const [market, setMarket] = useState<StockMarket>('BIST')
@@ -137,6 +141,23 @@ export function TransactionModal({
       quantity: parsedQuantity,
       price: parsedPrice,
       date,
+    }
+
+    const candidate: PortfolioTransaction = editing
+      ? { ...editing, ...transaction }
+      : {
+          ...transaction,
+          id: 'validation-preview',
+          createdAt: Date.now(),
+        }
+    const nextLedger = editing
+      ? transactions.map((item) => (item.id === editing.id ? candidate : item))
+      : [...transactions, candidate]
+    if (!isValidTransactionLedger(nextLedger)) {
+      return addToast(
+        'Bu değişiklik, işlem tarihinde sahip olduğunuzdan fazla hisse satılmasına yol açıyor.',
+        'info',
+      )
     }
 
     if (editing) {

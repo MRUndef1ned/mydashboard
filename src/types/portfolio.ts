@@ -27,6 +27,24 @@ export interface PortfolioHolding {
   transactionCount: number
 }
 
+export function isValidTransactionLedger(transactions: PortfolioTransaction[]) {
+  const balances = new Map<string, number>()
+  const sorted = [...transactions].sort(
+    (a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt,
+  )
+
+  for (const transaction of sorted) {
+    const balance = balances.get(transaction.symbol) ?? 0
+    const next =
+      transaction.type === 'buy'
+        ? balance + transaction.quantity
+        : balance - transaction.quantity
+    if (next < -0.00000001) return false
+    balances.set(transaction.symbol, Math.max(0, next))
+  }
+  return true
+}
+
 export function calculateHoldings(transactions: PortfolioTransaction[]): PortfolioHolding[] {
   const sorted = [...transactions].sort(
     (a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt,

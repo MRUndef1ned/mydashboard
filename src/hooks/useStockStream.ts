@@ -95,10 +95,10 @@ export function useStockStream(symbols: string[]) {
     es.onerror = () => {
       setState((s) => ({
         ...s,
-        status: 'error',
-        error: 'Bağlantı kesildi. Sunucunun çalıştığından emin olun.',
+        // EventSource otomatik yeniden bağlanır; ekrandaki son fiyatları koru.
+        status: Object.keys(s.quotes).length > 0 ? 'live' : 'connecting',
+        error: null,
       }))
-      es.close()
     }
 
     return () => {

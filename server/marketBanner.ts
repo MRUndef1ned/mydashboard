@@ -1,4 +1,5 @@
 import { fetchQuotes } from './yahoo.js'
+import { isAnyMarketOpen } from './cache.js'
 
 export interface MarketTickerItem {
   id: string
@@ -17,7 +18,7 @@ const GRAMS_PER_TROY_OZ = 31.1034768
 const CORE_SYMBOLS = ['XU100.IS', 'USDTRY=X', 'EURTRY=X', 'GC=F'] as const
 
 let bannerCache: { data: MarketTickerItem[]; expiresAt: number } | null = null
-const BANNER_TTL = 45_000
+const highlightCache = new Map<string, { item: MarketTickerItem; expiresAt: number }>()
 
 function buildItem(
   id: string,
@@ -63,7 +64,8 @@ async function fetchCoreBanner(): Promise<MarketTickerItem[]> {
   }
 
   if (items.length > 0) {
-    bannerCache = { data: items, expiresAt: Date.now() + BANNER_TTL }
+    const ttl = isAnyMarketOpen() ? 45_000 : 60 * 60 * 1000
+    bannerCache = { data: items, expiresAt: Date.now() + ttl }
   }
 
   return items
@@ -74,10 +76,16 @@ export async function fetchMarketBanner(highlightSymbol?: string): Promise<Marke
   const items = [...core]
 
   if (highlightSymbol) {
+    const cachedHighlight = highlightCache.get(highlightSymbol)
+    if (cachedHighlight && Date.now() < cachedHighlight.expiresAt) {
+      items.push(cachedHighlight.item)
+      return items
+    }
+
     const quotes = await fetchQuotes([highlightSymbol])
     const q = quotes[0]
     if (q) {
-      items.push({
+      const item: MarketTickerItem = {
         id: 'highlight',
         label: q.symbol.replace('.IS', ''),
         price: q.price,
@@ -87,7 +95,10 @@ export async function fetchMarketBanner(highlightSymbol?: string): Promise<Marke
         type: 'stock',
         market: q.market,
         symbol: q.symbol,
-      })
+      }
+      const ttl = isAnyMarketOpen() ? 25_000 : 60 * 60 * 1000
+      highlightCache.set(highlightSymbol, { item, expiresAt: Date.now() + ttl })
+      items.push(item)
     }
   }
 

@@ -136,7 +136,7 @@ export function StocksPage() {
             {status === 'live' ? (
               <>
                 <Radio className="h-3 w-3 animate-pulse-soft" />
-                {marketOpen ? 'Canlı · 30sn güncelleme' : 'Piyasa kapalı · 2dk güncelleme'}
+                {marketOpen ? 'Canlı · 30sn güncelleme' : 'Piyasa kapalı · son veri · saatte bir'}
               </>
             ) : status === 'connecting' ? (
               <>

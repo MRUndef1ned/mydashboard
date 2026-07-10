@@ -2,22 +2,27 @@ import type { StockQuote } from './types.js'
 import { detectMarket } from './yahoo.js'
 
 interface CacheEntry {
-  key: string
   quotes: StockQuote[]
   expiresAt: number
 }
 
-let cache: CacheEntry | null = null
-const TTL_MS = 25_000
+const cache = new Map<string, CacheEntry>()
+const OPEN_MARKET_TTL_MS = 25_000
+const CLOSED_MARKET_TTL_MS = 60 * 60 * 1000
 
 export function getCachedQuotes(symbolsKey: string): StockQuote[] | null {
-  if (!cache || cache.key !== symbolsKey) return null
-  if (Date.now() > cache.expiresAt) return null
-  return cache.quotes
+  const entry = cache.get(symbolsKey)
+  if (!entry || Date.now() > entry.expiresAt) return null
+  return entry.quotes
+}
+
+export function getStaleCachedQuotes(symbolsKey: string): StockQuote[] | null {
+  return cache.get(symbolsKey)?.quotes ?? null
 }
 
 export function setCachedQuotes(symbolsKey: string, quotes: StockQuote[]) {
-  cache = { key: symbolsKey, quotes, expiresAt: Date.now() + TTL_MS }
+  const ttl = isAnyMarketOpen() ? OPEN_MARKET_TTL_MS : CLOSED_MARKET_TTL_MS
+  cache.set(symbolsKey, { quotes, expiresAt: Date.now() + ttl })
 }
 
 export function isAnyMarketOpen(): boolean {
@@ -38,5 +43,5 @@ export function isAnyMarketOpen(): boolean {
 }
 
 export function getPollInterval(): number {
-  return isAnyMarketOpen() ? 30_000 : 120_000
+  return isAnyMarketOpen() ? 30_000 : 60 * 60 * 1000
 }

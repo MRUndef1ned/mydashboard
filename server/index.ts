@@ -1,7 +1,13 @@
 import express from 'express'
 import cors from 'cors'
 import { fetchHistoricalSeries, fetchQuotes, normalizeSymbol, searchStocks } from './yahoo.js'
-import { getCachedQuotes, setCachedQuotes, getPollInterval, isAnyMarketOpen } from './cache.js'
+import {
+  getCachedQuotes,
+  getStaleCachedQuotes,
+  setCachedQuotes,
+  getPollInterval,
+  isAnyMarketOpen,
+} from './cache.js'
 import { fetchMarketBanner } from './marketBanner.js'
 
 const app = express()
@@ -18,8 +24,12 @@ async function getQuotesWithCache(symbols: string[]) {
   if (cached) return cached
 
   const quotes = await fetchQuotes(normalized)
-  setCachedQuotes(key, quotes)
-  return quotes
+  if (quotes.length > 0) {
+    setCachedQuotes(key, quotes)
+    return quotes
+  }
+
+  return getStaleCachedQuotes(key) ?? []
 }
 
 app.get('/api/health', (_req, res) => {
@@ -110,7 +120,8 @@ app.get('/api/stocks/stream', (req, res) => {
   res.flushHeaders()
 
   let active = true
-  let timer: ReturnType<typeof setInterval> | null = null
+  let timer: ReturnType<typeof setTimeout> | null = null
+  let currentInterval = getPollInterval()
 
   async function push() {
     if (!active) return
@@ -131,25 +142,38 @@ app.get('/api/stocks/stream', (req, res) => {
   }
 
   function schedule() {
-    if (timer) clearInterval(timer)
-    timer = setInterval(push, getPollInterval())
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(async () => {
+      await push()
+      currentInterval = getPollInterval()
+      schedule()
+    }, currentInterval)
   }
 
-  push()
-  schedule()
+  void push().finally(schedule)
 
   const marketCheck = setInterval(() => {
-    schedule()
+    const nextInterval = getPollInterval()
+    if (nextInterval !== currentInterval) {
+      currentInterval = nextInterval
+      if (timer) clearTimeout(timer)
+      void push().finally(schedule)
+    }
   }, 60_000)
+
+  const heartbeat = setInterval(() => {
+    if (active) res.write(': keepalive\n\n')
+  }, 25_000)
 
   req.on('close', () => {
     active = false
-    if (timer) clearInterval(timer)
+    if (timer) clearTimeout(timer)
     clearInterval(marketCheck)
+    clearInterval(heartbeat)
   })
 })
 
 app.listen(PORT, () => {
   console.log(`📈 Nexus Stocks API → http://localhost:${PORT}`)
-  console.log(`   Piyasa açık: ${getPollInterval() / 1000}sn | Kapalı: 120sn | Önbellek: 25sn`)
+  console.log('   Piyasa açık: 30sn | Kapalı: 1sa | Önbellek: dinamik')
 })

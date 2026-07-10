@@ -11,6 +11,7 @@ export interface StockNewsItem {
   market: 'BIST' | 'US'
   source: 'google' | 'yahoo'
   thumbnail?: string
+  score?: number
 }
 
 export function useWatchlistNews(filterSymbol?: string | 'all') {

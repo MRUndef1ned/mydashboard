@@ -1,22 +1,33 @@
 import { useMemo, useState } from 'react'
-import { ExternalLink, Newspaper, Radio, RefreshCw } from 'lucide-react'
+import { CalendarDays, ExternalLink, Newspaper, Radio, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useWatchlistNews } from '../hooks/useWatchlistNews'
+import { useWatchlistNews, type StockNewsItem } from '../hooks/useWatchlistNews'
 import { displaySymbol } from '../types/stocks'
 import { getMarketTheme } from '../utils/stockViews'
 
-function formatRelativeTime(timestamp: number) {
-  const diff = Date.now() - timestamp
-  const minutes = Math.floor(diff / 60_000)
-  if (minutes < 1) return 'Az önce'
-  if (minutes < 60) return `${minutes} dk önce`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} sa önce`
-  const days = Math.floor(hours / 24)
-  if (days < 7) return `${days} gün önce`
+function startOfDay(timestamp: number) {
+  const date = new Date(timestamp)
+  date.setHours(0, 0, 0, 0)
+  return date.getTime()
+}
+
+function dayLabel(timestamp: number) {
+  const today = startOfDay(Date.now())
+  const day = startOfDay(timestamp)
+  const diff = Math.round((today - day) / 86_400_000)
+  if (diff === 0) return 'Bugün'
+  if (diff === 1) return 'Dün'
   return new Date(timestamp).toLocaleDateString('tr-TR', {
+    weekday: 'long',
     day: 'numeric',
-    month: 'short',
+    month: 'long',
+  })
+}
+
+function formatClock(timestamp: number) {
+  return new Date(timestamp).toLocaleTimeString('tr-TR', {
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
@@ -26,11 +37,20 @@ export function NewsPage() {
 
   const counts = useMemo(() => {
     const map = new Map<string, number>()
-    for (const item of allNews) {
-      map.set(item.symbol, (map.get(item.symbol) ?? 0) + 1)
-    }
+    for (const item of allNews) map.set(item.symbol, (map.get(item.symbol) ?? 0) + 1)
     return map
   }, [allNews])
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, StockNewsItem[]>()
+    for (const item of news) {
+      const key = String(startOfDay(item.publishedAt))
+      const list = map.get(key) ?? []
+      list.push(item)
+      map.set(key, list)
+    }
+    return [...map.entries()].sort((a, b) => Number(b[0]) - Number(a[0]))
+  }, [news])
 
   return (
     <div className="space-y-6">
@@ -38,19 +58,20 @@ export function NewsPage() {
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-base font-semibold text-white">Hisse Haberleri</h3>
-            <span className="rounded-full bg-white/5 px-2 py-1 text-[10px] font-medium text-zinc-500">
-              {allNews.length} haber
+            <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-medium text-emerald-400">
+              Son 7 gün
             </span>
           </div>
           <p className="mt-1 text-xs text-zinc-500">
-            İzleme listenizdeki hisselere özel güncel haber akışı.
+            Sadece izleme listenizdeki hisselerle doğrudan ilgili, güncel haberler.
           </p>
         </div>
         <div className="flex items-center gap-3 text-xs text-zinc-500">
+          <span className="rounded-full bg-white/5 px-2 py-1">{allNews.length} haber</span>
           {updatedAt && (
             <span className="flex items-center gap-1.5">
               <Radio className="h-3 w-3 text-emerald-400" />
-              Son güncelleme: {new Date(updatedAt).toLocaleTimeString('tr-TR')}
+              {new Date(updatedAt).toLocaleTimeString('tr-TR')}
             </span>
           )}
           {loading && (
@@ -102,43 +123,71 @@ export function NewsPage() {
 
           {loading && news.length === 0 ? (
             <div className="grid gap-3">
-              {[1, 2, 3, 4, 5].map((item) => (
-                <div key={item} className="h-24 animate-pulse rounded-2xl bg-white/5" />
+              {[1, 2, 3, 4].map((item) => (
+                <div key={item} className="h-28 animate-pulse rounded-2xl bg-white/5" />
               ))}
             </div>
           ) : news.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-white/10 py-16 text-center">
-              <p className="text-sm text-zinc-500">Bu filtre için haber bulunamadı.</p>
+              <p className="text-sm text-zinc-500">
+                Son 7 günde bu filtre için yeterince ilgili haber bulunamadı.
+              </p>
             </div>
           ) : (
-            <div className="grid gap-3">
-              {news.map((item) => {
-                const theme = getMarketTheme(item.market)
-                return (
-                  <a
-                    key={item.id}
-                    href={item.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`group rounded-2xl border bg-surface-1/50 p-4 transition hover:bg-white/[0.03] ${theme.cardBorder}`}
-                  >
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${theme.badge}`}>
-                        {displaySymbol(item.symbol)}
-                      </span>
-                      <span className="text-[10px] text-zinc-600">{item.publisher}</span>
-                      <span className="text-[10px] text-zinc-700">·</span>
-                      <span className="text-[10px] text-zinc-600">
-                        {formatRelativeTime(item.publishedAt)}
-                      </span>
-                      <ExternalLink className="ml-auto h-3.5 w-3.5 text-zinc-700 opacity-0 transition group-hover:opacity-100" />
-                    </div>
-                    <h4 className="text-sm font-medium leading-6 text-zinc-100 group-hover:text-white">
-                      {item.title}
+            <div className="space-y-6">
+              {grouped.map(([dayKey, items]) => (
+                <section key={dayKey} className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <CalendarDays className="h-3.5 w-3.5 text-zinc-600" />
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                      {dayLabel(Number(dayKey))}
                     </h4>
-                  </a>
-                )
-              })}
+                    <span className="text-[10px] text-zinc-700">{items.length}</span>
+                  </div>
+                  <div className="grid gap-3">
+                    {items.map((item) => {
+                      const theme = getMarketTheme(item.market)
+                      return (
+                        <a
+                          key={item.id}
+                          href={item.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`group grid gap-3 rounded-2xl border bg-surface-1/55 p-4 transition hover:bg-white/[0.03] sm:grid-cols-[88px_minmax(0,1fr)_auto] ${theme.cardBorder}`}
+                        >
+                          <div className="flex items-center gap-3 sm:block">
+                            <div className={`inline-flex rounded-lg px-2.5 py-1 text-[11px] font-semibold ${theme.badge}`}>
+                              {displaySymbol(item.symbol)}
+                            </div>
+                            <p className="text-[11px] tabular-nums text-zinc-600 sm:mt-2">
+                              {formatClock(item.publishedAt)}
+                            </p>
+                          </div>
+
+                          <div className="min-w-0">
+                            <h4 className="text-[15px] font-medium leading-6 text-zinc-100 group-hover:text-white">
+                              {item.title}
+                            </h4>
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-zinc-600">
+                              <span>{item.publisher}</span>
+                              <span>·</span>
+                              <span className="uppercase tracking-wide">
+                                {item.source === 'yahoo' ? 'Yahoo' : 'Google'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start justify-end">
+                            <span className="inline-flex items-center gap-1 rounded-lg border border-white/6 bg-white/3 px-2.5 py-1.5 text-[11px] text-zinc-500 transition group-hover:border-indigo-500/20 group-hover:text-indigo-300">
+                              Oku <ExternalLink className="h-3 w-3" />
+                            </span>
+                          </div>
+                        </a>
+                      )
+                    })}
+                  </div>
+                </section>
+              ))}
             </div>
           )}
         </>
@@ -165,7 +214,7 @@ function FilterChip({
       className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
         active
           ? theme
-            ? `${theme.badge}`
+            ? theme.badge
             : 'bg-indigo-500/20 text-indigo-300'
           : 'text-zinc-500 hover:text-zinc-300'
       }`}

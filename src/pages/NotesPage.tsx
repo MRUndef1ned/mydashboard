@@ -60,6 +60,7 @@ export function NotesPage() {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving'>('saved')
   const [slashOpen, setSlashOpen] = useState(false)
   const [emojiOpen, setEmojiOpen] = useState(false)
+  const [coverOpen, setCoverOpen] = useState(false)
   const [tagInput, setTagInput] = useState('')
   const [removeTarget, setRemoveTarget] = useState<Note | null>(null)
   const editorRef = useRef<HTMLTextAreaElement>(null)
@@ -98,6 +99,7 @@ export function NotesPage() {
     setSaveStatus('saved')
     setSlashOpen(false)
     setEmojiOpen(false)
+    setCoverOpen(false)
   }, [selected?.id])
 
   useEffect(() => {
@@ -178,9 +180,9 @@ export function NotesPage() {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/6 bg-[#0a0a0e] shadow-2xl">
-      <div className="grid min-h-[680px] lg:h-[calc(100vh-13rem)] lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="flex min-h-[220px] flex-col border-b border-white/6 bg-[#0d0d12] lg:min-h-0 lg:border-b-0 lg:border-r">
-          <div className="flex items-center justify-between px-4 py-4">
+      <div className="grid min-h-[620px] lg:h-[calc(100vh-13rem)] lg:min-h-[680px] lg:grid-cols-[260px_minmax(0,1fr)]">
+        <aside className="flex min-h-0 flex-col border-b border-white/6 bg-[#0d0d12] lg:border-b-0 lg:border-r">
+          <div className="flex items-center justify-between px-3 py-3 lg:px-4 lg:py-4">
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400">
                 <PanelLeft className="h-3.5 w-3.5" />
@@ -207,7 +209,7 @@ export function NotesPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-2 pb-4">
+          <div className="flex gap-2 overflow-x-auto px-3 pb-3 lg:block lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:px-2 lg:pb-4">
             {sortedNotes.length === 0 ? (
               <div className="px-3 py-8 text-center">
                 <FileText className="mx-auto mb-2 h-5 w-5 text-zinc-800" />
@@ -216,7 +218,7 @@ export function NotesPage() {
             ) : (
               <>
                 {sortedNotes.some((note) => note.pinned) && (
-                  <p className="mb-1 mt-3 px-2 text-[9px] font-semibold uppercase tracking-widest text-zinc-700">
+                  <p className="mb-1 mt-3 hidden px-2 text-[9px] font-semibold uppercase tracking-widest text-zinc-700 lg:block">
                     Favoriler
                   </p>
                 )}
@@ -224,15 +226,15 @@ export function NotesPage() {
                   const showPrivateLabel =
                     !note.pinned && (index === 0 || sortedNotes[index - 1]?.pinned)
                   return (
-                    <div key={note.id}>
+                    <div key={note.id} className="shrink-0 lg:block">
                       {showPrivateLabel && (
-                        <p className="mb-1 mt-4 px-2 text-[9px] font-semibold uppercase tracking-widest text-zinc-700">
+                        <p className="mb-1 mt-4 hidden px-2 text-[9px] font-semibold uppercase tracking-widest text-zinc-700 lg:block">
                           Özel
                         </p>
                       )}
                       <button
                         onClick={() => setSelectedId(note.id)}
-                        className={`group flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition ${
+                        className={`group flex w-44 items-center gap-2 rounded-lg px-2.5 py-2 text-left transition lg:w-full ${
                           selectedId === note.id
                             ? 'bg-white/[0.065] text-zinc-100'
                             : 'text-zinc-500 hover:bg-white/[0.035] hover:text-zinc-300'
@@ -250,7 +252,7 @@ export function NotesPage() {
             )}
           </div>
 
-          <button onClick={createPage} className="m-3 flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-600 transition hover:bg-white/4 hover:text-zinc-300">
+          <button onClick={createPage} className="m-3 hidden items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-600 transition hover:bg-white/4 hover:text-zinc-300 lg:flex">
             <Plus className="h-3.5 w-3.5" /> Yeni sayfa
           </button>
         </aside>
@@ -262,20 +264,28 @@ export function NotesPage() {
             <div className="min-h-full">
               <div className={`relative h-28 transition-all sm:h-36 ${coverStyles[draft.cover] || 'bg-white/[0.015]'}`}>
                 <div className="absolute right-4 top-3 flex items-center gap-2">
-                  <div className="group relative">
-                    <button className="rounded-lg bg-black/20 px-2.5 py-1.5 text-[10px] text-zinc-500 opacity-0 backdrop-blur transition hover:text-zinc-200 group-hover:opacity-100">
+                  <div className="relative">
+                    <button
+                      onClick={() => setCoverOpen((open) => !open)}
+                      className="rounded-lg bg-black/30 px-2.5 py-1.5 text-[10px] text-zinc-400 opacity-100 backdrop-blur transition hover:text-zinc-200 sm:opacity-0 sm:hover:opacity-100"
+                    >
                       Kapak
                     </button>
-                    <div className="invisible absolute right-0 top-8 z-20 flex w-48 flex-wrap gap-2 rounded-xl border border-white/10 bg-surface-1/95 p-3 opacity-0 shadow-xl backdrop-blur transition group-hover:visible group-hover:opacity-100">
+                    {coverOpen && (
+                    <div className="absolute right-0 top-8 z-20 flex w-48 flex-wrap gap-2 rounded-xl border border-white/10 bg-surface-1/95 p-3 shadow-xl backdrop-blur">
                       {(Object.keys(coverStyles) as NoteCover[]).map((cover) => (
                         <button
                           key={cover}
-                          onClick={() => patchDraft({ cover })}
+                          onClick={() => {
+                            patchDraft({ cover })
+                            setCoverOpen(false)
+                          }}
                           title={cover}
                           className={`h-8 w-12 rounded-md border border-white/10 ${coverStyles[cover] || 'bg-zinc-900'} ${draft.cover === cover ? 'ring-2 ring-indigo-400' : ''}`}
                         />
                       ))}
                     </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -307,8 +317,8 @@ export function NotesPage() {
                   )}
                 </div>
 
-                <div className="mb-3 flex items-center justify-between gap-3 text-[10px] text-zinc-700">
-                  <div className="flex items-center gap-1.5">
+                <div className="mb-3 flex items-center justify-end gap-3 text-[10px] text-zinc-700 sm:justify-between">
+                  <div className="hidden min-w-0 items-center gap-1.5 sm:flex">
                     <span>Notlar</span>
                     <ChevronRight className="h-3 w-3" />
                     <span className="max-w-48 truncate text-zinc-600">{draft.title || 'Başlıksız'}</span>
@@ -335,7 +345,7 @@ export function NotesPage() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
-                    <button className="rounded-lg p-2 text-zinc-600 hover:bg-white/5 hover:text-zinc-300">
+                    <button className="hidden rounded-lg p-2 text-zinc-600 hover:bg-white/5 hover:text-zinc-300 sm:block">
                       <MoreHorizontal className="h-4 w-4" />
                     </button>
                   </div>

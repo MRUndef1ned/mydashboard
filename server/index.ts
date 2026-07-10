@@ -9,6 +9,7 @@ import {
   isAnyMarketOpen,
 } from './cache.js'
 import { fetchMarketBanner } from './marketBanner.js'
+import { fetchWatchlistNews } from './news.js'
 
 const app = express()
 const PORT = Number(process.env.PORT) || 3001
@@ -89,6 +90,29 @@ app.get('/api/stocks/history', async (req, res) => {
   } catch (err) {
     console.error('History fetch error:', err)
     res.status(500).json({ error: 'Tarihsel fiyat verisi alınamadı' })
+  }
+})
+
+app.get('/api/stocks/news', async (req, res) => {
+  try {
+    const rawSymbols = typeof req.query.symbols === 'string' ? req.query.symbols : ''
+    const rawNames = typeof req.query.names === 'string' ? req.query.names : ''
+    const symbols = rawSymbols.split(',').map((symbol) => symbol.trim()).filter(Boolean)
+    const names = rawNames.split('|').map((name) => name.trim())
+
+    if (symbols.length === 0) {
+      return res.status(400).json({ error: 'symbols parametresi gerekli' })
+    }
+
+    const metas = symbols.map((symbol, index) => ({
+      symbol,
+      name: names[index] || undefined,
+    }))
+    const items = await fetchWatchlistNews(metas)
+    res.json({ items, updatedAt: Date.now() })
+  } catch (err) {
+    console.error('News fetch error:', err)
+    res.status(500).json({ error: 'Haberler alınamadı' })
   }
 })
 

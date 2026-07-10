@@ -15,6 +15,7 @@ import { MessagesPage } from './pages/MessagesPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { StocksPage } from './pages/StocksPage'
 import { PortfolioPage } from './pages/PortfolioPage'
+import { NewsPage } from './pages/NewsPage'
 import { NotesPage } from './pages/NotesPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -45,6 +46,7 @@ export default function App() {
               <Route path="/messages" element={<MessagesPage />} />
               <Route path="/stocks" element={<StocksPage />} />
               <Route path="/portfolio" element={<PortfolioPage />} />
+              <Route path="/news" element={<NewsPage />} />
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>

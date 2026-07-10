@@ -30,6 +30,13 @@ export const navItems: NavItem[] = [
     icon: 'wallet-cards',
   },
   {
+    id: 'news',
+    path: '/news',
+    label: 'Haberler',
+    description: 'İzleme listenizdeki hisselere özel güncel haberler.',
+    icon: 'newspaper',
+  },
+  {
     id: 'analytics',
     path: '/analytics',
     label: 'Analitik',

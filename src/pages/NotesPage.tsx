@@ -257,13 +257,13 @@ export function NotesPage() {
           </button>
         </aside>
 
-        <main className="min-w-0 overflow-y-auto bg-[#0a0a0e]">
+        <main className="min-w-0 overflow-x-hidden overflow-y-auto bg-[#0a0a0e]">
           {!selected || !draft ? (
             <EmptyWorkspace onCreate={createPage} />
           ) : (
             <div className="min-h-full">
               <div className={`relative h-28 transition-all sm:h-36 ${coverStyles[draft.cover] || 'bg-white/[0.015]'}`}>
-                <div className="absolute right-4 top-3 flex items-center gap-2">
+                <div className="absolute right-2 top-3 flex items-center gap-2 sm:right-4">
                   <div className="relative">
                     <button
                       onClick={() => setCoverOpen((open) => !open)}
@@ -384,7 +384,7 @@ export function NotesPage() {
                       className="w-24 bg-transparent text-[10px] text-zinc-400 outline-none placeholder:text-zinc-700"
                     />
                   </div>
-                  <div className="ml-auto flex gap-1.5">
+                  <div className="flex w-full gap-2 pt-2 sm:ml-auto sm:w-auto sm:gap-1.5 sm:pt-0">
                     {(Object.keys(colorDots) as NoteColor[]).map((color) => (
                       <button
                         key={color}

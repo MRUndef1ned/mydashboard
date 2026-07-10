@@ -10,6 +10,7 @@ import {
 } from './cache.js'
 import { fetchMarketBanner } from './marketBanner.js'
 import { fetchWatchlistNews } from './news.js'
+import { fetchArticleContent } from './articleReader.js'
 
 const app = express()
 const PORT = Number(process.env.PORT) || 3001
@@ -113,6 +114,24 @@ app.get('/api/stocks/news', async (req, res) => {
   } catch (err) {
     console.error('News fetch error:', err)
     res.status(500).json({ error: 'Haberler alınamadı' })
+  }
+})
+
+app.get('/api/stocks/news/article', async (req, res) => {
+  try {
+    const url = typeof req.query.url === 'string' ? req.query.url.trim() : ''
+    const title = typeof req.query.title === 'string' ? req.query.title : undefined
+    const publisher = typeof req.query.publisher === 'string' ? req.query.publisher : undefined
+
+    if (!url || !/^https?:\/\//i.test(url)) {
+      return res.status(400).json({ error: 'Geçerli bir haber url gerekli' })
+    }
+
+    const article = await fetchArticleContent(url, { title, publisher })
+    res.json({ article })
+  } catch (err) {
+    console.error('Article fetch error:', err)
+    res.status(500).json({ error: 'Haber içeriği alınamadı' })
   }
 })
 

@@ -13,7 +13,7 @@ const STORAGE_KEY = 'nexus_notes'
 
 interface NotesContextValue {
   notes: Note[]
-  addNote: (draft: NoteDraft) => void
+  addNote: (draft: NoteDraft) => string
   updateNote: (id: string, draft: NoteDraft) => void
   deleteNote: (id: string) => void
   togglePin: (id: string) => void
@@ -25,13 +25,23 @@ function loadNotes(): Note[] {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]')
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (note): note is Note =>
-        typeof note?.id === 'string' &&
-        typeof note?.title === 'string' &&
-        typeof note?.content === 'string' &&
-        Array.isArray(note?.tags),
-    )
+    return parsed
+      .filter(
+        (note) =>
+          typeof note?.id === 'string' &&
+          typeof note?.title === 'string' &&
+          typeof note?.content === 'string' &&
+          Array.isArray(note?.tags),
+      )
+      .map((note) => ({
+        ...note,
+        icon: typeof note.icon === 'string' ? note.icon : '📝',
+        cover: note.cover ?? 'none',
+        color: note.color ?? 'indigo',
+        pinned: Boolean(note.pinned),
+        createdAt: Number(note.createdAt) || Date.now(),
+        updatedAt: Number(note.updatedAt) || Date.now(),
+      })) as Note[]
   } catch {
     return []
   }
@@ -46,16 +56,18 @@ export function NotesProvider({ children }: { children: ReactNode }) {
 
   const addNote = useCallback((draft: NoteDraft) => {
     const now = Date.now()
+    const id = crypto.randomUUID()
     setNotes((current) => [
       {
         ...draft,
-        id: crypto.randomUUID(),
+        id,
         pinned: false,
         createdAt: now,
         updatedAt: now,
       },
       ...current,
     ])
+    return id
   }, [])
 
   const updateNote = useCallback((id: string, draft: NoteDraft) => {

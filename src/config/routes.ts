@@ -47,7 +47,7 @@ export const navItems: NavItem[] = [
     id: 'notes',
     path: '/notes',
     label: 'Notlar',
-    description: 'Fikirlerinizi, hatırlatmaları ve önemli bilgileri kaydedin.',
+    description: 'Notion tarzı sayfalar, günlük ve blok editörü.',
     icon: 'notebook-pen',
   },
   {
